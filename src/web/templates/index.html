@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G-SignalX M19 Trading System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+    <!-- Operation Indicator -->
+    <div id="operationIndicator" class="operation-indicator">
+        <div class="alert alert-info">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span id="operationMessage">Processing...</span>
+        </div>
+    </div>
+
+    <!-- Draggable Trading Board Handle -->
+    <div id="tradingBoardHandle" class="trading-board-handle">
+        <i class="fas fa-chess-board"></i>
+        <span>Trading Board</span>
+    </div>
+
+    <!-- Trading Board Modal -->
+    <div class="modal fade trading-board-modal" id="tradingBoardModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title"><i class="fas fa-chess-board"></i> Trading Board</h5>
+                        <div class="text-white small">Manage per-session pair directions in real time</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <!-- Search functionality removed as per instructions -->
+                        <!-- <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                            <input type="text" id="tradingBoardSearch" class="form-control search-input" placeholder="Filter pairs or sessions">
+                        </div> -->
+                        <script>
+                            // Remove JS references to the search input to prevent null errors
+                            // (For "Cannot read properties of null (reading 'value')")
+                            // If code reads: document.getElementById('tradingBoardSearch').value, replace with blank string or "".
+
+                            // global patch (can't refactor all usages immediately):
+                            // (adds a mock element if needed - safe for in-template JS quick fix)
+                            document.addEventListener('DOMContentLoaded', function () {
+                                if (!document.getElementById('tradingBoardSearch')) {
+                                    window.tradingBoardSearchPatch = true;
+                                    Object.defineProperty(document, 'getElementById', {
+                                        value: (function(orig){
+                                            return function(id) {
+                                                if (id === 'tradingBoardSearch') {
+                                                    return { value: "" };
+                                                }
+                                                return orig.call(document, id);
+                                            }
+                                        })(document.getElementById.bind(document)),
+                                        configurable: true
+                                    });
+                                }
+                            });
+                        </script>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div id="tradingBoardAlert" class="alert alert-info d-none"></div>
+                    <div id="tradingBoardSpinner" class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div id="tradingBoardContent" class="mt-2"></div>
+                </div>
+                <div class="modal-footer">
+                    <div class="text-muted small" id="tradingBoardTimestamp"></div>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="refreshTradingBoard">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="/static/img/group-icon.png" alt="Gocity Group Logo" class="logo-img me-3" style="height: 50px;" onerror="this.style.display='none'">
+                        <div>
+                            <h1></i>G-SignalX M19 Trading System</h1>
+                            
+                        </div>
+                    </div>
+                    <div class="company-info" style="font-size: 0.9em; opacity: 0.9;">
+                        <p class="pl-3 mb-0">GOCITY GROUP TRADING SYSTEM</p>
+                        <p class="mb-1">MANAGED BY G-SIGNALX TEAM</p>
+                        
+
+
+                    </div>
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-outline-light" id="themeToggle">
+                            <i class="fas fa-moon"></i> Dark Mode
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <img src="/static/img/tandroid-chrome-192x192.png" alt="Gocity Logo" class="logo-img mb-3" style="height: 40px;" onerror="this.style.display='none'">
+                    <div class="connection-status">
+                        <span class="status-indicator status-disconnected" id="statusIndicator"></span>
+                        <span id="connectionStatus">Connecting...</span>
+                        <button id="reconnectBtn" class="btn btn-sm btn-outline-light ms-2" style="display: none;" onclick="manualReconnect()">
+                            <i class="fas fa-sync-alt"></i> Reconnect
+                        </button>
+                    </div>
+                    <div class="last-update" id="lastUpdate">Last update: Never</div>
+                   
+                    <!-- Add User Menu -->
+                    <div class="user-menu mt-2">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light dropdown-toggle" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user"></i> {{ session['user_id'] }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('manual') }}"><i class="fas fa-book"></i> User Manual</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('settings') }}"><i class="fas fa-cog"></i> Settings</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Account Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="card profit-card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-wallet fa-2x mb-2"></i>
+                        <h6>Account Balance</h6>
+                        <h3 id="accountBalance">$0.00</h3>
+                        <small id="accountEquity">Equity: $0.00</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card profit-card bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-arrow-up fa-2x mb-2"></i>
+                        <h6>Total Profit</h6>
+                        <h3 id="totalProfit">$0.00</h3>
+                        <small id="profitableCount">0 positions</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card profit-card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-arrow-down fa-2x mb-2"></i>
+                        <h6>Total Loss</h6>
+                        <h3 id="totalLoss">$0.00</h3>
+                        <small id="losingCount">0 positions</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card profit-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-pie fa-2x mb-2"></i>
+                        <h6>Net Profit/Loss</h6>
+                        <h3 id="netProfit" class="profit-neutral">$0.00</h3>
+                        <small id="totalPositions">0 positions</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Dashboard -->
+        <div class="row mb-4">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tachometer-alt"></i> 
+                            Real-Time Performance Dashboard
+                            <span class="badge bg-info ms-2" id="updateIndicator">Live</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <div class="h2 mb-0" id="winRate">0%</div>
+                                    <small class="text-muted">Win Rate</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <div class="h2 mb-0" id="avgProfitPerPosition">$0.00</div>
+                                    <small class="text-muted">Avg Profit/Position</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <div class="h2 mb-0" id="avgProfitableAmount">$0.00</div>
+                                    <small class="text-muted">Avg Profitable</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <div class="h2 mb-0" id="avgLossAmount">$0.00</div>
+                                    <small class="text-muted">Avg Loss</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <div class="h2 mb-0" id="marginLevel">0%</div>
+                                    <small class="text-muted">Margin Level</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <div class="h2 mb-0" id="updateFrequency">0s</div>
+                                    <small class="text-muted">Update Speed</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-success" role="progressbar" id="profitProgress" style="width: 50%"></div>
+                                    <div class="progress-bar bg-danger" role="progressbar" id="lossProgress" style="width: 50%"></div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small class="text-success">Profitable: <span id="profitProgressText">50%</span></small>
+                                    <small class="text-danger">Losing: <span id="lossProgressText">50%</span></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <button id="closeProfitBtn" class="btn action-btn btn-close-profit">
+                    <i class="fas fa-check-circle"></i> Close All Profitable
+                </button>
+                <button id="closeLossBtn" class="btn action-btn btn-close-loss">
+                    <i class="fas fa-exclamation-triangle"></i> Close All Losing
+                </button>
+                <button id="closeAllBtn" class="btn action-btn btn-close-all">
+                    <i class="fas fa-times-circle"></i> Close All Positions
+                </button>
+                <button id="refreshBtn" class="btn action-btn btn-outline-primary">
+                    <i class="fas fa-sync-alt"></i> Refresh Data
+                </button>
+            </div>
+        </div>
+
+        <!-- Positions Table -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="positions-table">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-list"></i> Open Positions</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Ticket</th>
+                                        <th>Symbol</th>
+                                        <th>Type</th>
+                                        <th>Volume</th>
+                                        <th>Open Price</th>
+                                        <th>Current Price</th>
+                                        <th>Profit/Loss</th>
+                                        <th>Profit %</th>
+                                        <th>Open Time</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="positionsTableBody">
+                                    <tr>
+                                        <td colspan="10" class="text-center py-4">
+                                            <div class="loading-spinner">
+                                                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                                <p class="mt-2">Loading positions...</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Log Panel -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-area"></i> Profit History</h5>
+                    <canvas id="profitChart"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-terminal"></i> Activity Log</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="log-panel" id="logPanel">
+                            <div class="log-entry log-info">
+                                <span class="timestamp">[Starting]</span> Initializing connection...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let socket;
+        let profitChart;
+        let isConnected = false;
+        let lastUpdateTime = null;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSocket();
+            initializeChart();
+            setupEventListeners();
+            addLog('System started', 'info');
+        });
+
+        // Socket.IO initialization with retry logic
+        function initializeSocket() {
+            let reconnectAttempts = 0;
+            const maxReconnectAttempts = 10;
+            const reconnectDelay = 3000; // 3 seconds
+
+            function connectSocket() {
+                socket = io({
+                    transports: ['websocket', 'polling'],
+                    timeout: 20000,
+                    reconnection: true,
+                    reconnectionDelay: reconnectDelay,
+                    reconnectionAttempts: maxReconnectAttempts,
+                    forceNew: true,
+                    upgrade: true,
+                    rememberUpgrade: false
+                });
+
+                socket.on('connect', function() {
+                    isConnected = true;
+                    reconnectAttempts = 0;
+                    updateConnectionStatus('Connected', 'connected');
+                    addLog('Connected to server', 'success');
+                    
+                    // Request initial data
+                    socket.emit('get_positions');
+                    socket.emit('get_profit_history', { hours: 24 });
+                    
+                    // Re-enable all buttons
+                    resetAllButtons();
+                });
+
+                socket.on('disconnect', function(reason) {
+                    isConnected = false;
+                    updateConnectionStatus('Disconnected', 'disconnected');
+                    addLog(`Disconnected from server: ${reason}`, 'error');
+                    
+                    // Disable all action buttons
+                    disableAllButtons();
+                });
+
+                socket.on('connect_error', function(error) {
+                    isConnected = false;
+                    updateConnectionStatus('Connection Error', 'error');
+                    addLog(`Connection error: ${error.message || error}`, 'error');
+                    
+                    // Retry connection if not at max attempts
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        reconnectAttempts++;
+                        setTimeout(() => {
+                            addLog(`Retrying connection (${reconnectAttempts}/${maxReconnectAttempts})...`, 'info');
+                        }, reconnectDelay);
+                    } else {
+                        addLog('Max reconnection attempts reached. Please refresh the page.', 'error');
+                        // Show reconnect button as last resort
+                        document.getElementById('reconnectBtn').style.display = 'inline-block';
+                    }
+                });
+
+                socket.on('connected', function(data) {
+                    addLog(data.message, 'success');
+                });
+
+                socket.on('positions_update', function(data) {
+                    updatePositionsDisplay(data);
+                    updateLastUpdateTime();
+                });
+
+                socket.on('account_status', function(data) {
+                    updateAccountSummary(data);
+                });
+
+                socket.on('operation_started', function(data) {
+                    showOperationIndicator(data.message);
+                    addLog(`Operation started: ${data.message}`, 'info');
+                });
+
+                socket.on('operation_completed', function(data) {
+                    let message = `Operation completed: ${data.message}`;
+                    if (data.closed > 0) {
+                        message += ` (${data.closed} positions closed)`;
+                    }
+                    if (data.failed > 0) {
+                        message += ` (${data.failed} failed)`;
+                    }
+                    
+                    showSuccessMessage(message, 4000);
+                    addLog(`Operation completed: ${data.message}`, 'success');
+                    
+                    if (data.closed > 0) {
+                        addLog(`✓ Closed ${data.closed} positions successfully`, 'success');
+                    }
+                    if (data.failed > 0) {
+                        addLog(`⚠ Failed to close ${data.failed} positions`, 'warning');
+                    }
+                    
+                    // Re-enable buttons and refresh data
+                    resetAllButtons();
+                    setTimeout(() => {
+                        socket.emit('get_positions');
+                    }, 1000);
+                });
+
+                socket.on('operation_error', function(data) {
+                    showErrorMessage(`Operation failed: ${data.message}`, 5000);
+                    addLog(`Operation error: ${data.message}`, 'error');
+                    
+                    // Re-enable buttons
+                    resetAllButtons();
+                });
+
+                socket.on('operation_timeout', function(data) {
+                    showErrorMessage(`Operation timeout: ${data.message}`, 5000);
+                    addLog(`⏱ Operation timeout: ${data.message}`, 'warning');
+                    
+                    // Re-enable buttons and refresh data
+                    resetAllButtons();
+                    socket.emit('get_positions');
+                });
+
+                socket.on('error', function(data) {
+                    addLog(`Error: ${data.message || data}`, 'error');
+                });
+                
+                socket.on('reconnect_error', function(error) {
+                    addLog(`Reconnect error: ${error.message || error}`, 'error');
+                });
+                
+                socket.on('reconnect_failed', function() {
+                    addLog('Reconnection failed. Please refresh the page.', 'error');
+                    updateConnectionStatus('Reconnection Failed', 'error');
+                    document.getElementById('reconnectBtn').style.display = 'inline-block';
+                });
+
+                socket.on('profit_history', function(data) {
+                    updateProfitChart(data);
+                });
+
+                socket.on('bot_status', function(data) {
+                    if (data.bot === 'MarketSessionTradingBot') {
+                        const statusIcon = data.status === 'connected' ? '✓' : '✗';
+                        const statusType = data.status === 'connected' ? 'success' : 'error';
+                        const statusText = data.status === 'connected' ? 'Connected' : 'Disconnected';
+                        addLog(`MarketSessionTradingBot ${statusIcon} ${statusText}: ${data.message}`, statusType);
+                    }
+                });
+            }
+
+            connectSocket();
+        }
+
+        // Initialize Chart.js
+        function initializeChart() {
+            const ctx = document.getElementById('profitChart').getContext('2d');
+            profitChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Net Profit',
+                        data: [],
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+
+
+        // Update connection status
+        function updateConnectionStatus(status, type) {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const connectionStatus = document.getElementById('connectionStatus');
+            const reconnectBtn = document.getElementById('reconnectBtn');
+            
+            statusIndicator.className = `status-indicator status-${type}`;
+            connectionStatus.textContent = status;
+            
+            // Show/hide reconnect button based on connection status
+            if (type === 'disconnected' || type === 'error') {
+                reconnectBtn.style.display = 'inline-block';
+            } else {
+                reconnectBtn.style.display = 'none';
+            }
+        }
+
+        // Manual reconnect function
+        function manualReconnect() {
+            const reconnectBtn = document.getElementById('reconnectBtn');
+            reconnectBtn.disabled = true;
+            reconnectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+            
+            addLog('Manual reconnection initiated...', 'info');
+            updateConnectionStatus('Reconnecting...', 'error');
+            
+            // Close existing connection and reinitialize
+            if (socket) {
+                socket.close();
+            }
+            
+            setTimeout(() => {
+                initializeSocket();
+                
+                // Re-enable button after 5 seconds
+                setTimeout(() => {
+                    reconnectBtn.disabled = false;
+                    reconnectBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Reconnect';
+                }, 5000);
+            }, 1000);
+        }
+
+        // Update positions display
+        function updatePositionsDisplay(data) {
+            updateAccountSummary(data.summary, data.account);
+            updatePositionsTable(data.positions);
+        }
+
+        // Update account summary cards
+        function updateAccountSummary(summary, account) {
+            // Handle both old and new data structures
+            const summaryData = summary || {};
+            const accountData = account || {};
+            
+            // Update account information
+            document.getElementById('accountBalance').textContent = formatMoney(accountData.balance || 0);
+            document.getElementById('accountEquity').textContent = `Equity: ${formatMoney(accountData.equity || 0)}`;
+            
+            // Update profit/loss information
+            document.getElementById('totalProfit').textContent = formatMoney(summaryData.total_profit || 0);
+            document.getElementById('totalLoss').textContent = formatMoney(Math.abs(summaryData.total_loss || 0));
+            
+            // Update position counts
+            document.getElementById('profitableCount').textContent = `${accountData.profitable_count || 0} positions`;
+            document.getElementById('losingCount').textContent = `${accountData.losing_count || 0} positions`;
+            document.getElementById('totalPositions').textContent = `${accountData.positions_count || summaryData.total_positions || 0} positions`;
+            
+            // Update net profit with proper styling
+            const netProfit = summaryData.net_profit || 0;
+            const netProfitElement = document.getElementById('netProfit');
+            netProfitElement.textContent = formatMoney(netProfit);
+            
+            // Apply color coding
+            if (netProfit > 0) {
+                netProfitElement.className = 'profit-positive';
+                netProfitElement.parentElement.parentElement.className = 'card profit-card bg-success text-white';
+            } else if (netProfit < 0) {
+                netProfitElement.className = 'profit-negative';
+                netProfitElement.parentElement.parentElement.className = 'card profit-card bg-danger text-white';
+            } else {
+                netProfitElement.className = 'profit-neutral';
+                netProfitElement.parentElement.parentElement.className = 'card profit-card bg-secondary text-white';
+            }
+            
+            // Update performance dashboard
+            updatePerformanceDashboard(accountData);
+            
+            // Update button states based on position counts
+            updateButtonStates(accountData);
+        }
+
+        // Update performance dashboard with real-time metrics
+        function updatePerformanceDashboard(accountData) {
+            const winRate = accountData.win_rate || 0;
+            const avgProfitPerPosition = accountData.avg_profit_per_position || 0;
+            const avgProfitableAmount = accountData.avg_profitable_amount || 0;
+            const avgLossAmount = accountData.avg_loss_amount || 0;
+            const marginLevel = accountData.margin_level || 0;
+            const profitableCount = accountData.profitable_count || 0;
+            const losingCount = accountData.losing_count || 0;
+            const totalCount = profitableCount + losingCount;
+            
+            // Update performance metrics
+            document.getElementById('winRate').textContent = `${winRate.toFixed(1)}%`;
+            document.getElementById('avgProfitPerPosition').textContent = formatMoney(avgProfitPerPosition);
+            document.getElementById('avgProfitableAmount').textContent = formatMoney(avgProfitableAmount);
+            document.getElementById('avgLossAmount').textContent = formatMoney(avgLossAmount);
+            document.getElementById('marginLevel').textContent = `${marginLevel.toFixed(0)}%`;
+            
+            // Update win rate color
+            const winRateElement = document.getElementById('winRate');
+            if (winRate >= 60) {
+                winRateElement.className = 'h2 mb-0 text-success';
+            } else if (winRate >= 40) {
+                winRateElement.className = 'h2 mb-0 text-warning';
+            } else {
+                winRateElement.className = 'h2 mb-0 text-danger';
+            }
+            
+            // Update margin level color
+            const marginLevelElement = document.getElementById('marginLevel');
+            if (marginLevel >= 200) {
+                marginLevelElement.className = 'h2 mb-0 text-success';
+            } else if (marginLevel >= 100) {
+                marginLevelElement.className = 'h2 mb-0 text-warning';
+            } else {
+                marginLevelElement.className = 'h2 mb-0 text-danger';
+            }
+            
+            // Update progress bars
+            if (totalCount > 0) {
+                const profitPercentage = (profitableCount / totalCount) * 100;
+                const lossPercentage = (losingCount / totalCount) * 100;
+                
+                document.getElementById('profitProgress').style.width = `${profitPercentage}%`;
+                document.getElementById('lossProgress').style.width = `${lossPercentage}%`;
+                document.getElementById('profitProgressText').textContent = `${profitPercentage.toFixed(1)}%`;
+                document.getElementById('lossProgressText').textContent = `${lossPercentage.toFixed(1)}%`;
+            } else {
+                document.getElementById('profitProgress').style.width = '0%';
+                document.getElementById('lossProgress').style.width = '0%';
+                document.getElementById('profitProgressText').textContent = '0%';
+                document.getElementById('lossProgressText').textContent = '0%';
+            }
+            
+            // Update speed indicator
+            const currentTime = new Date().getTime();
+            if (lastUpdateTime) {
+                const timeDiff = (currentTime - lastUpdateTime) / 1000;
+                document.getElementById('updateFrequency').textContent = `${timeDiff.toFixed(1)}s`;
+                
+                // Update indicator based on speed
+                const indicator = document.getElementById('updateIndicator');
+                if (timeDiff <= 2) {
+                    indicator.className = 'badge bg-success ms-2';
+                    indicator.textContent = 'Fast';
+                } else if (timeDiff <= 5) {
+                    indicator.className = 'badge bg-warning ms-2';
+                    indicator.textContent = 'Normal';
+                } else {
+                    indicator.className = 'badge bg-danger ms-2';
+                    indicator.textContent = 'Slow';
+                }
+            }
+            lastUpdateTime = currentTime;
+        }
+        
+        // Enhanced button states with performance metrics
+        function updateButtonStates(accountData) {
+            const profitBtn = document.getElementById('closeProfitBtn');
+            const lossBtn = document.getElementById('closeLossBtn');
+            const allBtn = document.getElementById('closeAllBtn');
+            
+            const profitableCount = accountData.profitable_count || 0;
+            const losingCount = accountData.losing_count || 0;
+            const totalCount = accountData.positions_count || 0;
+            const totalProfit = accountData.total_profit || 0;
+            const totalLoss = accountData.total_loss || 0;
+            
+            // Enable/disable buttons based on position availability
+            profitBtn.disabled = profitableCount === 0;
+            lossBtn.disabled = losingCount === 0;
+            allBtn.disabled = totalCount === 0;
+            
+            // Enhanced button text with counts and profit amounts
+            profitBtn.innerHTML = `<i class="fas fa-check-circle"></i> Close Profitable (${profitableCount}) ${formatMoney(totalProfit)}`;
+            lossBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Close Losing (${losingCount}) ${formatMoney(totalLoss)}`;
+            allBtn.innerHTML = `<i class="fas fa-times-circle"></i> Close All (${totalCount}) ${formatMoney(totalProfit - totalLoss)}`;
+            
+            // Add enhanced visual feedback for disabled buttons
+            if (profitableCount === 0) {
+                profitBtn.classList.add('disabled');
+                profitBtn.style.opacity = '0.5';
+                profitBtn.title = 'No profitable positions available';
+            } else {
+                profitBtn.classList.remove('disabled');
+                profitBtn.style.opacity = '1';
+                profitBtn.title = `Close ${profitableCount} profitable positions for ${formatMoney(totalProfit)}`;
+            }
+            
+            if (losingCount === 0) {
+                lossBtn.classList.add('disabled');
+                lossBtn.style.opacity = '0.5';
+                lossBtn.title = 'No losing positions available';
+            } else {
+                lossBtn.classList.remove('disabled');
+                lossBtn.style.opacity = '1';
+                lossBtn.title = `Close ${losingCount} losing positions to limit loss to ${formatMoney(totalLoss)}`;
+            }
+            
+            if (totalCount === 0) {
+                allBtn.classList.add('disabled');
+                allBtn.style.opacity = '0.5';
+                allBtn.title = 'No positions available';
+            } else {
+                allBtn.classList.remove('disabled');
+                allBtn.style.opacity = '1';
+                allBtn.title = `Close all ${totalCount} positions for net ${formatMoney(totalProfit - totalLoss)}`;
+            }
+            
+            // Add performance indicators
+            const winRate = accountData.win_rate || 0;
+            const avgProfitPerPosition = accountData.avg_profit_per_position || 0;
+            
+            // Update tooltips with performance data
+            if (winRate > 0) {
+                profitBtn.title += ` (Win rate: ${winRate.toFixed(1)}%)`;
+            }
+            if (avgProfitPerPosition !== 0) {
+                allBtn.title += ` (Avg: ${formatMoney(avgProfitPerPosition)}/position)`;
+            }
+        }
+
+        // Update positions table
+        function updatePositionsTable(positions) {
+            const tbody = document.getElementById('positionsTableBody');
+            tbody.innerHTML = '';
+
+            if (!positions || positions.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="text-center py-4">
+                            <i class="fas fa-inbox fa-2x text-muted mb-2 d-block"></i>
+                            <p class="text-muted mb-0">No open positions</p>
+                            <small class="text-muted">Positions will appear here when trades are opened</small>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            positions.forEach((position, index) => {
+                const row = document.createElement('tr');
+                const profitClass = position.profit >= 0 ? 'profit-positive' : 'profit-negative';
+                const rowClass = position.profit >= 0 ? 'table-success' : 'table-danger';
+                
+                // Handle missing fields with defaults
+                const ticket = position.ticket || 'N/A';
+                const symbol = position.symbol || 'N/A';
+                const type = position.type || 'N/A';
+                const volume = position.volume || 0;
+                const openPrice = position.open_price || position.price_open || 0;
+                const currentPrice = position.current_price || position.price_current || openPrice;
+                const profit = position.profit || 0;
+                const profitPercent = position.profit_percent || 0;
+                const time = position.time || position.time_setup || 'N/A';
+                
+                row.className = `${rowClass} position-row`;
+                row.innerHTML = `
+                    <td><strong>${ticket}</strong></td>
+                    <td><span class="badge bg-primary">${symbol}</span></td>
+                    <td><span class="badge ${type.toLowerCase() === 'buy' ? 'bg-success' : 'bg-danger'}">${type.toUpperCase()}</span></td>
+                    <td>${parseFloat(volume).toFixed(2)}</td>
+                    <td>${parseFloat(openPrice).toFixed(5)}</td>
+                    <td>${parseFloat(currentPrice).toFixed(5)}</td>
+                    <td class="${profitClass}">
+                        <strong>${formatMoney(profit)}</strong>
+                        <br><small>${profit >= 0 ? '+' : ''}${parseFloat(profitPercent).toFixed(2)}%</small>
+                    </td>
+                    <td class="${profitClass}">
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar ${profit >= 0 ? 'bg-success' : 'bg-danger'}" 
+                                 role="progressbar" 
+                                 style="width: ${Math.min(Math.abs(profitPercent), 100)}%">
+                                ${parseFloat(profitPercent).toFixed(1)}%
+                            </div>
+                        </div>
+                    </td>
+                    <td><small>${formatDateTime(time)}</small></td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-danger" 
+                                    onclick="closePosition(${ticket})"
+                                    title="Close Position">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" 
+                                    onclick="showPositionDetails(${JSON.stringify(position).replace(/"/g, '&quot;')})"
+                                    title="View Details">
+                                <i class="fas fa-info-circle"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            // Add summary row
+            if (positions.length > 0) {
+                const totalProfit = positions.reduce((sum, pos) => sum + (pos.profit || 0), 0);
+                const summaryRow = document.createElement('tr');
+                summaryRow.className = 'table-dark';
+                summaryRow.innerHTML = `
+                    <td colspan="6"><strong>TOTAL (${positions.length} positions)</strong></td>
+                    <td class="${totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}">
+                        <strong>${formatMoney(totalProfit)}</strong>
+                    </td>
+                    <td colspan="3"></td>
+                `;
+                tbody.appendChild(summaryRow);
+            }
+        }
+
+        // Close single position
+        function closePosition(ticket) {
+            if (!isConnected) {
+                addLog('Not connected to server. Please wait for connection...', 'warning');
+                return;
+            }
+            
+            const button = event.target.closest('button');
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
+            
+            socket.emit('close_position', { ticket: ticket });
+            addLog(`Requesting closure of position ${ticket}...`, 'info');
+            showOperationIndicator(`Closing position ${ticket}...`);
+            
+            // Safety timeout for single position close
+            setTimeout(() => {
+                if (button && button.disabled) {
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-times"></i>';
+                    hideOperationIndicator();
+                    addLog(`Position ${ticket} close operation timed out`, 'warning');
+                }
+            }, 15000);
+        }
+
+        // Update profit chart
+        function updateProfitChart(data) {
+            if (!profitChart || !data || data.length === 0) return;
+
+            const labels = data.map(item => {
+                const date = new Date(item.timestamp);
+                return date.toLocaleTimeString();
+            });
+
+            const profits = data.map(item => item.net_profit);
+
+            profitChart.data.labels = labels;
+            profitChart.data.datasets[0].data = profits;
+            profitChart.update();
+        }
+
+        // Show operation indicator
+        function showOperationIndicator(message, type = 'info') {
+            const indicator = document.getElementById('operationIndicator');
+            const messageElement = document.getElementById('operationMessage');
+            
+            messageElement.textContent = message;
+            
+            // Update alert class based on type
+            const alertDiv = indicator.querySelector('.alert');
+            alertDiv.className = `alert alert-${type}`;
+            
+            // Add appropriate icon
+            let icon = 'fas fa-spinner fa-spin';
+            if (type === 'success') icon = 'fas fa-check-circle';
+            else if (type === 'danger') icon = 'fas fa-exclamation-triangle';
+            else if (type === 'warning') icon = 'fas fa-exclamation-circle';
+            
+            alertDiv.innerHTML = `<i class="${icon}"></i> <span id="operationMessage">${message}</span>`;
+            indicator.style.display = 'block';
+        }
+
+        // Hide operation indicator
+        function hideOperationIndicator() {
+            const indicator = document.getElementById('operationIndicator');
+            indicator.style.display = 'none';
+        }
+
+        // Show success message
+        function showSuccessMessage(message, duration = 3000) {
+            showOperationIndicator(message, 'success');
+            setTimeout(() => {
+                hideOperationIndicator();
+            }, duration);
+        }
+
+        // Show error message
+        function showErrorMessage(message, duration = 5000) {
+            showOperationIndicator(message, 'danger');
+            setTimeout(() => {
+                hideOperationIndicator();
+            }, duration);
+        }
+
+        // Add log entry
+        function addLog(message, type = 'info') {
+            const logPanel = document.getElementById('logPanel');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+            
+            logPanel.appendChild(logEntry);
+            logPanel.scrollTop = logPanel.scrollHeight;
+
+            // Keep only last 100 entries
+            while (logPanel.children.length > 100) {
+                logPanel.removeChild(logPanel.firstChild);
+            }
+        }
+
+        // Update last update time
+        function updateLastUpdateTime() {
+            lastUpdateTime = new Date();
+            document.getElementById('lastUpdate').textContent = `Last update: ${lastUpdateTime.toLocaleTimeString()}`;
+        }
+
+        // Format money
+        function formatMoney(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount || 0);
+        }
+
+        // Format date and time
+        function formatDateTime(dateString) {
+            if (!dateString || dateString === 'N/A') return 'N/A';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleString();
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        // Show position details modal
+        function showPositionDetails(position) {
+            const modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.innerHTML = `
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Position Details - ${position.symbol}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Ticket:</strong> ${position.ticket}<br>
+                                    <strong>Symbol:</strong> ${position.symbol}<br>
+                                    <strong>Type:</strong> ${position.type}<br>
+                                    <strong>Volume:</strong> ${position.volume}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Open Price:</strong> ${position.open_price || position.price_open}<br>
+                                    <strong>Current Price:</strong> ${position.current_price || position.price_current}<br>
+                                    <strong>Profit:</strong> <span class="${position.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatMoney(position.profit)}</span><br>
+                                    <strong>Profit %:</strong> <span class="${position.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${position.profit_percent}%</span>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-12">
+                                    <strong>Open Time:</strong> ${formatDateTime(position.time || position.time_setup)}<br>
+                                    <strong>Magic Number:</strong> ${position.magic || 'N/A'}<br>
+                                    <strong>Comment:</strong> ${position.comment || 'N/A'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-danger" onclick="closePosition(${position.ticket}); bootstrap.Modal.getInstance(this.closest('.modal')).hide();">
+                                <i class="fas fa-times"></i> Close Position
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+            
+            // Remove modal from DOM when hidden
+            modal.addEventListener('hidden.bs.modal', function() {
+                document.body.removeChild(modal);
+            });
+        }
+
+        // Enhanced button click handlers with better feedback
+        function setupEventListeners() {
+            // Helper function to check connection before executing
+            function checkConnection() {
+                if (!isConnected) {
+                    addLog('Not connected to server. Please wait for connection...', 'warning');
+                    return false;
+                }
+                return true;
+            }
+
+            // Close profitable positions
+            document.getElementById('closeProfitBtn').addEventListener('click', function() {
+                if (this.disabled || !checkConnection()) return;
+                
+                const profitableCount = parseInt(this.textContent.match(/\((\d+)\)/)?.[1] || 0);
+                if (profitableCount === 0) {
+                    addLog('No profitable positions to close', 'warning');
+                    return;
+                }
+                
+                this.disabled = true;
+                this.classList.add('pulse');
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Closing Profitable...';
+                
+                socket.emit('close_profitable');
+                addLog(`Requesting closure of ${profitableCount} profitable positions...`, 'info');
+                
+                // Safety timeout
+                setTimeout(() => {
+                    if (this.disabled) {
+                        this.disabled = false;
+                        this.classList.remove('pulse');
+                        addLog('Operation timed out. Please check manually.', 'warning');
+                        resetAllButtons();
+                    }
+                }, 30000);
+            });
+
+            // Close losing positions
+            document.getElementById('closeLossBtn').addEventListener('click', function() {
+                if (this.disabled || !checkConnection()) return;
+                
+                const losingCount = parseInt(this.textContent.match(/\((\d+)\)/)?.[1] || 0);
+                if (losingCount === 0) {
+                    addLog('No losing positions to close', 'warning');
+                    return;
+                }
+                
+                this.disabled = true;
+                this.classList.add('pulse');
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Closing Losing...';
+                
+                socket.emit('close_losing');
+                addLog(`Requesting closure of ${losingCount} losing positions...`, 'info');
+                
+                // Safety timeout
+                setTimeout(() => {
+                    if (this.disabled) {
+                        this.disabled = false;
+                        this.classList.remove('pulse');
+                        addLog('Operation timed out. Please check manually.', 'warning');
+                        resetAllButtons();
+                    }
+                }, 30000);
+            });
+
+            // Close all positions
+            document.getElementById('closeAllBtn').addEventListener('click', function() {
+                if (this.disabled || !checkConnection()) return;
+                
+                const totalCount = parseInt(this.textContent.match(/\((\d+)\)/)?.[1] || 0);
+                if (totalCount === 0) {
+                    addLog('No positions to close', 'warning');
+                    return;
+                }
+                
+                this.disabled = true;
+                this.classList.add('pulse');
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Closing All...';
+                
+                socket.emit('close_all');
+                addLog(`Requesting closure of ALL ${totalCount} positions...`, 'info');
+                
+                // Safety timeout
+                setTimeout(() => {
+                    if (this.disabled) {
+                        this.disabled = false;
+                        this.classList.remove('pulse');
+                        addLog('Operation timed out. Please check manually.', 'warning');
+                        resetAllButtons();
+                    }
+                }, 30000);
+            });
+
+            // Refresh data
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                if (this.disabled || !checkConnection()) return;
+                
+                this.disabled = true;
+                this.classList.add('pulse');
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+                
+                socket.emit('get_positions');
+                socket.emit('get_profit_history', { hours: 24 });
+                addLog('Refreshing data...', 'info');
+                
+                // Re-enable after 3 seconds
+                setTimeout(() => {
+                    this.disabled = false;
+                    this.classList.remove('pulse');
+                    this.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Data';
+                }, 3000);
+            });
+        }
+
+        // Helper functions for button management
+        function disableAllButtons() {
+            const buttons = ['closeProfitBtn', 'closeLossBtn', 'closeAllBtn', 'refreshBtn'];
+            buttons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.add('disabled');
+                    btn.style.opacity = '0.5';
+                }
+            });
+        }
+
+        function resetAllButtons() {
+            const buttons = [
+                { id: 'closeProfitBtn', icon: 'fas fa-check-circle', text: 'Close Profitable' },
+                { id: 'closeLossBtn', icon: 'fas fa-exclamation-triangle', text: 'Close Losing' },
+                { id: 'closeAllBtn', icon: 'fas fa-times-circle', text: 'Close All' },
+                { id: 'refreshBtn', icon: 'fas fa-sync-alt', text: 'Refresh Data' }
+            ];
+            
+            buttons.forEach(btn => {
+                const element = document.getElementById(btn.id);
+                if (element) {
+                    element.disabled = false;
+                    element.classList.remove('disabled', 'pulse');
+                    element.style.opacity = '1';
+                    element.innerHTML = `<i class="${btn.icon}"></i> ${btn.text}`;
+                }
+            });
+            
+            // Update button states based on current data
+            const mockData = { profitable_count: 0, losing_count: 0, positions_count: 0 };
+            updateButtonStates(mockData);
+        }
+
+        /* ================================
+         * Trading Board (Draggable UI)
+         * ================================ */
+        const tradingBoardState = {
+            sessions: [],
+            lastFetched: null,
+            dragging: false,
+            dragOffset: { x: 0, y: 0 }
+        };
+
+        function initTradingBoardUI() {
+            const handle = document.getElementById('tradingBoardHandle');
+            const modalElement = document.getElementById('tradingBoardModal');
+            const modal = new bootstrap.Modal(modalElement);
+            const refreshBtn = document.getElementById('refreshTradingBoard');
+            const searchInput = document.getElementById('tradingBoardSearch');
+
+            makeDraggable(handle);
+
+            handle.addEventListener('click', () => {
+                if (tradingBoardState.dragging) {
+                    tradingBoardState.dragging = false;
+                    return;
+                }
+                modal.show();
+                loadTradingBoard(true);
+            });
+
+            modalElement.addEventListener('shown.bs.modal', () => loadTradingBoard());
+            refreshBtn.addEventListener('click', () => loadTradingBoard(true));
+            searchInput.addEventListener('input', applyTradingBoardFilter);
+        }
+
+        function makeDraggable(element) {
+            let isMouseDown = false;
+            let startX = 0;
+            let startY = 0;
+            let initialX = 0;
+            let initialY = 0;
+
+            const onMouseMove = (event) => {
+                if (!isMouseDown) return;
+                tradingBoardState.dragging = true;
+                const dx = (event.clientX || event.touches?.[0]?.clientX) - startX;
+                const dy = (event.clientY || event.touches?.[0]?.clientY) - startY;
+                element.style.right = 'auto';
+                element.style.left = `${initialX + dx}px`;
+                element.style.top = `${initialY + dy}px`;
+            };
+
+            const onMouseUp = () => {
+                if (!isMouseDown) return;
+                isMouseDown = false;
+                element.classList.remove('dragging');
+                setTimeout(() => tradingBoardState.dragging = false, 150);
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                document.removeEventListener('touchmove', onMouseMove);
+                document.removeEventListener('touchend', onMouseUp);
+            };
+
+            const onMouseDown = (event) => {
+                isMouseDown = true;
+                element.classList.add('dragging');
+                startX = (event.clientX || event.touches?.[0]?.clientX);
+                startY = (event.clientY || event.touches?.[0]?.clientY);
+                const rect = element.getBoundingClientRect();
+                initialX = rect.left;
+                initialY = rect.top;
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+                document.addEventListener('touchmove', onMouseMove);
+                document.addEventListener('touchend', onMouseUp);
+            };
+
+            element.addEventListener('mousedown', onMouseDown);
+            element.addEventListener('touchstart', onMouseDown);
+        }
+
+        function loadTradingBoard(showSpinner = false) {
+            const spinner = document.getElementById('tradingBoardSpinner');
+            const alertBox = document.getElementById('tradingBoardAlert');
+            if (showSpinner) {
+                spinner.classList.remove('d-none');
+                alertBox.classList.add('d-none');
+            }
+
+            fetch('/api/trading_board', { credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(data => {
+                    spinner.classList.add('d-none');
+                    if (data.status !== 'success') {
+                        showTradingBoardAlert(data.error || 'Unable to load trading board', 'danger');
+                        return;
+                    }
+                    alertBox.classList.add('d-none');
+                    tradingBoardState.sessions = data.sessions || [];
+                    tradingBoardState.lastFetched = data.utc_now;
+                    renderTradingBoard();
+                })
+                .catch(err => {
+                    spinner.classList.add('d-none');
+                    showTradingBoardAlert(err.message || 'Network error', 'danger');
+                });
+        }
+
+        /**
+         * Get category from pair data (category comes from database)
+         * @param {object} pair - Pair object with category property from API
+         * @returns {string} Category: 'mostTraded', 'metals', 'crypto', or 'other'
+         */
+        function getPairCategory(pair) {
+            // Category comes directly from database via API
+            return pair.category || 'other';
+        }
+
+        function getCategoryName(category) {
+            const names = {
+                mostTraded: 'Most Traded Pairs',
+                metals: 'Metals & Commodities',
+                crypto: 'Cryptocurrencies',
+                other: 'Other Pairs'
+            };
+            return names[category] || 'Other Pairs';
+        }
+
+        function getCategoryIcon(category) {
+            const icons = {
+                mostTraded: 'fas fa-chart-line',
+                metals: 'fas fa-coins',
+                crypto: 'fab fa-bitcoin',
+                other: 'fas fa-exchange-alt'
+            };
+            return icons[category] || 'fas fa-exchange-alt';
+        }
+
+        function renderTradingBoard() {
+            const container = document.getElementById('tradingBoardContent');
+            const timestamp = document.getElementById('tradingBoardTimestamp');
+            const searchTerm = (document.getElementById('tradingBoardSearch').value || '').toLowerCase();
+
+            // Filter and sort sessions: active first
+            let sessions = tradingBoardState.sessions.filter(session => {
+                if (!searchTerm) return true;
+                const inName = session.name.toLowerCase().includes(searchTerm);
+                const inPair = session.pairs.some(p => p.symbol.toLowerCase().includes(searchTerm));
+                return inName || inPair;
+            });
+
+            // Sort: active sessions first
+            sessions.sort((a, b) => {
+                if (a.active && !b.active) return -1;
+                if (!a.active && b.active) return 1;
+                return 0;
+            });
+
+            if (!sessions.length) {
+                container.innerHTML = '<div class="alert alert-light border">No sessions match your filter.</div>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            
+            sessions.forEach(session => {
+                const card = document.createElement('div');
+                card.className = `session-card ${session.active ? 'active-session' : ''}`;
+
+                const badgeClass = session.active ? 'badge-active' : 'badge-inactive';
+                const badgeText = session.active ? 'Active' : 'Inactive';
+                const prettyStart = session.start_time?.slice(0, 5) || session.start_time;
+                const prettyEnd = session.end_time?.slice(0, 5) || session.end_time;
+
+                // Categorize pairs using category from database
+                const categorizedPairs = {
+                    mostTraded: [],
+                    metals: [],
+                    crypto: [],
+                    other: []
+                };
+
+                session.pairs.forEach(pair => {
+                    // Category comes from database, not hardcoded
+                    const category = getPairCategory(pair);
+                    categorizedPairs[category].push(pair);
+                });
+
+                // Render pairs by category
+                let pairsHTML = '';
+                const categoryOrder = ['mostTraded', 'metals', 'crypto', 'other'];
+                
+                categoryOrder.forEach(category => {
+                    if (categorizedPairs[category].length > 0) {
+                        const categoryName = getCategoryName(category);
+                        const categoryIcon = getCategoryIcon(category);
+                        const categoryClass = category;
+                        
+                        pairsHTML += `
+                            <div class="pair-category">
+                                <div class="category-header ${categoryClass}">
+                                    <i class="${categoryIcon}"></i>
+                                    <span>${categoryName}</span>
+                                </div>
+                                ${categorizedPairs[category].map(pair => `
+                                    <div class="pair-row">
+                                        <div class="pair-symbol">${pair.symbol}</div>
+                                        <select class="form-select form-select-sm direction-select" 
+                                                data-session="${session.id}" data-pair="${pair.pair_id}">
+                                            <option value="neutral" ${pair.direction === 'neutral' ? 'selected' : ''}>Neutral</option>
+                                            <option value="buy" ${pair.direction === 'buy' ? 'selected' : ''}>Buy</option>
+                                            <option value="sell" ${pair.direction === 'sell' ? 'selected' : ''}>Sell</option>
+                                        </select>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+                });
+
+                card.innerHTML = `
+                    <div class="session-header">
+                        <div class="session-title">
+                            <i class="fas fa-clock"></i>
+                            <span>${session.name}</span>
+                            <span class="badge ${badgeClass}">${badgeText}</span>
+                        </div>
+                        <div class="session-times">
+                            <i class="fas fa-clock"></i>
+                            <span>${prettyStart} → ${prettyEnd} UTC</span>
+                            <span class="mx-2">•</span>
+                            <span>Vol: ${session.volatility_factor}x</span>
+                        </div>
+                    </div>
+                    <div class="session-body">
+                        ${pairsHTML || '<div class="text-muted text-center py-3">No pairs available</div>'}
+                    </div>
+                `;
+
+                fragment.appendChild(card);
+            });
+
+            container.innerHTML = '';
+            container.appendChild(fragment);
+
+            timestamp.textContent = tradingBoardState.lastFetched
+                ? `Last updated: ${new Date(tradingBoardState.lastFetched).toLocaleString()}`
+                : 'Awaiting latest data...';
+
+            // Attach event listeners to direction selects
+            container.querySelectorAll('select.direction-select').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    const sessionId = e.target.getAttribute('data-session');
+                    const pairId = e.target.getAttribute('data-pair');
+                    const direction = e.target.value;
+                    updateTradingDirection(sessionId, pairId, direction, e.target);
+                });
+            });
+        }
+
+        function applyTradingBoardFilter() {
+            renderTradingBoard();
+        }
+
+        function showTradingBoardAlert(message, type = 'info') {
+            const alertBox = document.getElementById('tradingBoardAlert');
+            alertBox.className = `alert alert-${type}`;
+            alertBox.textContent = message;
+            alertBox.classList.remove('d-none');
+        }
+
+        function updateTradingDirection(sessionId, pairId, direction, selectElement) {
+            const previous = selectElement?.getAttribute('data-prev') || direction;
+            selectElement?.setAttribute('data-prev', direction);
+            if (selectElement) selectElement.disabled = true;
+
+            fetch('/api/trading_board/direction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ session_id: Number(sessionId), pair_id: Number(pairId), direction })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status !== 'success') {
+                    showTradingBoardAlert(data.error || 'Update failed', 'danger');
+                    if (selectElement) selectElement.value = previous;
+                } else {
+                    showTradingBoardAlert('Direction updated and applied.', 'success');
+                }
+            })
+            .catch(err => {
+                showTradingBoardAlert(err.message || 'Network error', 'danger');
+                if (selectElement) selectElement.value = previous;
+            })
+            .finally(() => {
+                if (selectElement) selectElement.disabled = false;
+            });
+        }
+
+        // Initialize Trading Board after UI scripts are ready
+        window.addEventListener('load', initTradingBoardUI);
+
+        // Auto-refresh data every 10 seconds
+        setInterval(function() {
+            if (isConnected) {
+                socket.emit('get_positions');
+            }
+        }, 10000);
+
+        // Auto-refresh profit history every 30 seconds
+        setInterval(function() {
+            if (isConnected) {
+                socket.emit('get_profit_history', { hours: 24 });
+            }
+        }, 30000);
+    </script>
+</body>
+</html> 

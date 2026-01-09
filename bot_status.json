@@ -1,0 +1,7 @@
+{
+  "is_connected": false,
+  "is_paused": false,
+  "last_updated": "2026-01-09T15:00:25.788983+00:00",
+  "bot_type": "MarketSessionTradingBot",
+  "message": "MT5 connection closed"
+}

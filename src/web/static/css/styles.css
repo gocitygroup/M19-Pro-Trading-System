@@ -1,0 +1,1154 @@
+/* ========================================
+   G-SignalX M19 Trading System
+   Centralized Stylesheet
+   ======================================== */
+
+/* ========================================
+   CSS VARIABLES & THEME DEFINITIONS
+   ======================================== */
+:root {
+    /* Light Theme Colors */
+    --bg: #f5f7fb;
+    --card-bg: #ffffff;
+    --card-border: #e5e7eb;
+    --text: #0f172a;
+    --muted: #6c757d;
+    --panel-bg: #f1f5f9;
+    --panel-text: #0f172a;
+    --header-bg: radial-gradient(circle at 20% 20%, #7c6cf3, #4a5bdc 55%, #2d3aa8 100%);
+    --header-text: #ffffff;
+    --section-bg: #f8f9fa;
+    --table-bg: #ffffff;
+    --table-border: #d8dee9;
+    --accent: #6c8cf5;
+    --accent-strong: #4a5bdc;
+    --glass: rgba(255, 255, 255, 0.7);
+    --code-bg: #0b1220;
+    --input-bg: #ffffff;
+    --input-border: #ced4da;
+}
+
+.theme-dark {
+    color-scheme: dark;
+    /* Dark Theme Colors */
+    --bg: #0b1220;
+    --card-bg: #0f172a;
+    --card-border: #1f2937;
+    --text: #e6edf3;
+    --muted: #94a3b8;
+    --panel-bg: #0b162b;
+    --panel-text: #e6edf3;
+    --header-bg: radial-gradient(circle at 20% 20%, #1f2937, #111827 55%, #0b1020 100%);
+    --header-text: #e6edf3;
+    --section-bg: #0f172a;
+    --table-bg: #0f172a;
+    --table-border: #1f2937;
+    --accent: #8ab4ff;
+    --accent-strong: #5f7ae7;
+    --glass: rgba(15, 23, 42, 0.7);
+    --code-bg: #0b1220;
+    --input-bg: #1f2937;
+    --input-border: #374151;
+}
+
+/* ========================================
+   GLOBAL STYLES
+   ======================================== */
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ========================================
+   CARD COMPONENTS
+   ======================================== */
+.card {
+    border: 1px solid var(--card-border);
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 25px;
+    background: var(--card-bg);
+    backdrop-filter: blur(6px);
+    transition: all 0.3s ease;
+}
+
+.card-header {
+    background: var(--header-bg);
+    color: var(--header-text);
+    border-bottom: none;
+    padding: 20px;
+    border-radius: 15px 15px 0 0 !important;
+}
+
+.card-body {
+    padding: 25px;
+    background: var(--card-bg);
+    color: var(--text);
+}
+
+.card-footer {
+    background: transparent;
+    border-top: 1px solid var(--card-border);
+    color: var(--text);
+}
+
+.profit-card {
+    transition: all 0.3s ease;
+    border: 1px solid var(--card-border);
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    background: var(--card-bg);
+    backdrop-filter: blur(6px);
+}
+
+.profit-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* ========================================
+   HEADER & NAVIGATION
+   ======================================== */
+.dashboard-header {
+    background: var(--header-bg);
+    color: var(--header-text);
+    padding: 20px 0;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.manual-header {
+    background: var(--header-bg);
+    color: var(--header-text);
+    padding: 18px 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.brand-title {
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    margin: 0;
+    line-height: 1.2;
+    color: var(--header-text);
+}
+
+.brand-subtitle {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.95rem;
+    color: var(--header-text);
+}
+
+/* ========================================
+   FORM ELEMENTS
+   ======================================== */
+.form-control,
+.form-select {
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 5px;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background: var(--input-bg);
+    border-color: var(--accent-strong);
+    color: var(--text);
+    box-shadow: 0 0 0 0.2rem rgba(106, 140, 245, 0.25);
+}
+
+.form-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    color: var(--text);
+}
+
+.form-check-label {
+    color: var(--text);
+}
+
+.input-group-text {
+    border-radius: 10px 0 0 10px;
+    background: var(--section-bg);
+    border-color: var(--input-border);
+    color: var(--text);
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+.btn-primary {
+    border-radius: 10px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    border: 1px solid var(--accent-strong);
+    font-weight: 600;
+    color: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+    color: #ffffff;
+}
+
+.btn-secondary {
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-weight: 600;
+    background: var(--muted);
+    border-color: var(--muted);
+    color: #ffffff;
+}
+
+.btn-success {
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-weight: 600;
+}
+
+.btn-outline-light {
+    color: var(--header-text);
+    border-color: var(--header-text);
+}
+
+.btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--header-text);
+}
+
+.btn-outline-secondary {
+    color: var(--text);
+    border-color: var(--card-border);
+}
+
+.btn-outline-secondary:hover {
+    background: var(--section-bg);
+    color: var(--text);
+}
+
+.action-btn {
+    border-radius: 25px;
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    margin: 5px;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-close-all {
+    background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+    color: white;
+}
+
+.btn-close-profit {
+    background: linear-gradient(45deg, #51cf66, #40c057);
+    color: white;
+}
+
+.btn-close-loss {
+    background: linear-gradient(45deg, #ffd43b, #fab005);
+    color: white;
+}
+
+.reset-btn {
+    font-size: 0.9rem;
+    padding: 8px 16px;
+}
+
+/* ========================================
+   TABLES
+   ======================================== */
+.positions-table {
+    background: var(--table-bg);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--table-border);
+}
+
+.table {
+    color: var(--text);
+    margin-bottom: 0;
+}
+
+.table thead {
+    background: var(--header-bg);
+    color: var(--header-text);
+}
+
+.table tbody tr {
+    border-bottom: 1px solid var(--table-border);
+}
+
+.table-hover tbody tr:hover {
+    background: var(--section-bg);
+}
+
+/* ========================================
+   STATUS INDICATORS
+   ======================================== */
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-connected {
+    background-color: #28a745;
+}
+
+.status-disconnected {
+    background-color: #dc3545;
+}
+
+.status-error {
+    background-color: #ffc107;
+}
+
+.profit-positive {
+    color: #28a745 !important;
+    font-weight: bold;
+}
+
+.profit-negative {
+    color: #dc3545 !important;
+    font-weight: bold;
+}
+
+.profit-neutral {
+    color: var(--muted) !important;
+}
+
+/* ========================================
+   ALERTS & NOTIFICATIONS
+   ======================================== */
+.alert {
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid;
+}
+
+.alert-info {
+    background-color: rgba(23, 162, 184, 0.1);
+    border-color: #17a2b8;
+    color: var(--text);
+}
+
+.alert-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-color: #28a745;
+    color: var(--text);
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: #ffc107;
+    color: var(--text);
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+    color: var(--text);
+}
+
+.alert-light {
+    background: var(--section-bg);
+    border-color: var(--card-border);
+    color: var(--text);
+}
+
+/* ========================================
+   LOGS & PANELS
+   ======================================== */
+.log-panel {
+    background: var(--panel-bg);
+    color: var(--panel-text);
+    border-radius: 10px;
+    padding: 15px;
+    height: 300px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    border: 1px solid var(--card-border);
+}
+
+.log-entry {
+    margin: 2px 0;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+.log-info {
+    background-color: rgba(23, 162, 184, 0.2);
+}
+
+.log-success {
+    background-color: rgba(40, 167, 69, 0.2);
+}
+
+.log-warning {
+    background-color: rgba(255, 193, 7, 0.2);
+}
+
+.log-error {
+    background-color: rgba(220, 53, 69, 0.2);
+}
+
+/* ========================================
+   CHARTS
+   ======================================== */
+.chart-container {
+    position: relative;
+    height: 300px;
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--card-border);
+}
+
+/* ========================================
+   SETTINGS PAGE SPECIFIC
+   ======================================== */
+.setting-group {
+    background: var(--section-bg);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid var(--card-border);
+}
+
+.setting-group-title {
+    font-weight: 700;
+    color: var(--accent-strong);
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.tooltip-icon {
+    cursor: help;
+    color: var(--muted);
+    margin-left: 5px;
+}
+
+/* ========================================
+   TABS
+   ======================================== */
+.nav-tabs {
+    border-bottom: 1px solid var(--card-border);
+}
+
+.nav-tabs .nav-link {
+    border-radius: 10px 10px 0 0;
+    font-weight: 600;
+    color: var(--muted);
+    border: 1px solid transparent;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: var(--card-border);
+    color: var(--text);
+}
+
+.nav-tabs .nav-link.active {
+    background: var(--card-bg);
+    color: var(--accent-strong);
+    border-color: var(--card-border) var(--card-border) var(--card-bg);
+}
+
+.tab-content {
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 0 0 15px 15px;
+    border: 1px solid var(--card-border);
+    border-top: none;
+}
+
+/* ========================================
+   BADGES
+   ======================================== */
+.badge-info {
+    background: #17a2b8;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    color: #ffffff;
+}
+
+.badge-active {
+    background: #28a745;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    animation: pulse-badge 2s infinite;
+}
+
+.badge-active::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.badge-inactive {
+    background: var(--muted);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* ========================================
+   TRADING BOARD MODAL
+   ======================================== */
+.trading-board-handle {
+    position: fixed;
+    top: 45%;
+    right: 12px;
+    z-index: 1300;
+    background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 14px 0 0 14px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+    cursor: grab;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.trading-board-handle:hover {
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+    transform: translateX(-2px);
+}
+
+.trading-board-handle.dragging {
+    opacity: 0.9;
+    cursor: grabbing;
+}
+
+.trading-board-modal .modal-content {
+    border-radius: 16px;
+    border: 1px solid var(--card-border);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    background: linear-gradient(160deg, var(--card-bg) 0%, var(--glass) 100%);
+    backdrop-filter: blur(8px);
+}
+
+.trading-board-modal .modal-header {
+    background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+    color: var(--header-text);
+    border-radius: 16px 16px 0 0;
+    padding: 20px 24px;
+    border-bottom: none;
+}
+
+.trading-board-modal .modal-title {
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: var(--header-text);
+}
+
+.trading-board-modal .modal-body {
+    background: var(--card-bg);
+    color: var(--text);
+}
+
+.trading-board-modal .modal-footer {
+    background: var(--card-bg);
+    border-top: 1px solid var(--card-border);
+    color: var(--text);
+}
+
+.trading-board-modal .session-card {
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--card-border);
+    padding: 0;
+    background: var(--card-bg);
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.trading-board-modal .session-card:hover {
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+    transform: translateY(-4px);
+}
+
+.trading-board-modal .session-card.active-session {
+    border-color: #28a745;
+    border-width: 2px;
+    box-shadow: 0 4px 16px rgba(40, 167, 69, 0.2);
+}
+
+.trading-board-modal .session-card.active-session .session-header {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: var(--header-text);
+    padding: 16px 20px;
+}
+
+.trading-board-modal .session-card:not(.active-session) .session-header {
+    background: linear-gradient(135deg, rgba(106, 122, 255, 0.14), rgba(118, 75, 162, 0.12));
+    padding: 16px 20px;
+}
+
+.trading-board-modal .session-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.trading-board-modal .session-title {
+    font-weight: 700;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: 1.1rem;
+    color: var(--text);
+}
+
+.trading-board-modal .session-body {
+    padding: 20px;
+    background: var(--card-bg);
+}
+
+.trading-board-modal .pair-category {
+    margin-bottom: 24px;
+}
+
+.trading-board-modal .pair-category:last-child {
+    margin-bottom: 0;
+}
+
+.trading-board-modal .category-header {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.trading-board-modal .category-header.mostTraded {
+    color: #0d6efd;
+    border-bottom-color: #0d6efd;
+}
+
+.trading-board-modal .category-header.metals {
+    color: #ffc107;
+    border-bottom-color: #ffc107;
+}
+
+.trading-board-modal .category-header.crypto {
+    color: #fd7e14;
+    border-bottom-color: #fd7e14;
+}
+
+.trading-board-modal .category-header.other {
+    color: var(--muted);
+    border-bottom-color: var(--muted);
+}
+
+.trading-board-modal .pair-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--card-border);
+    transition: background-color 0.2s ease;
+    border-radius: 6px;
+    margin-bottom: 4px;
+}
+
+.trading-board-modal .pair-row:hover {
+    background-color: rgba(106, 140, 245, 0.08);
+}
+
+.trading-board-modal .pair-row:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.trading-board-modal .pair-symbol {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.trading-board-modal .direction-select {
+    max-width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    background: var(--input-bg);
+    color: var(--text);
+}
+
+.trading-board-modal .direction-select:focus {
+    border-color: var(--accent-strong);
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.trading-board-modal .session-times {
+    font-size: 0.85rem;
+    color: var(--header-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.trading-board-modal .session-card:not(.active-session) .session-times {
+    color: var(--muted);
+}
+
+.trading-board-modal .search-input {
+    border-radius: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--card-border);
+    background: var(--input-bg);
+    color: var(--text);
+}
+
+.trading-board-modal .search-input:focus {
+    border-color: var(--accent-strong);
+    box-shadow: 0 0 0 0.2rem rgba(106, 140, 245, 0.35);
+}
+
+/* ========================================
+   MANUAL PAGE SPECIFIC
+   ======================================== */
+.pill {
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--header-text);
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.78rem;
+}
+
+.toc a {
+    text-decoration: none;
+    color: var(--accent-strong);
+}
+
+.toc a:hover {
+    text-decoration: underline;
+}
+
+.kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    background: rgba(108, 140, 245, 0.14);
+    border: 1px solid rgba(108, 140, 245, 0.35);
+    padding: 2px 6px;
+    border-radius: 8px;
+    color: var(--text);
+}
+
+.callout {
+    border-left: 4px solid var(--accent-strong);
+    background: rgba(108, 140, 245, 0.10);
+    padding: 12px 14px;
+    border-radius: 12px;
+    color: var(--text);
+}
+
+.muted {
+    color: var(--muted);
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text);
+}
+
+.chip i {
+    color: var(--accent-strong);
+}
+
+pre {
+    background: var(--code-bg);
+    color: #e6edf3;
+    padding: 14px;
+    border-radius: 14px;
+    overflow: auto;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.accordion-item {
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.accordion-button {
+    font-weight: 800;
+    background: var(--card-bg);
+    color: var(--text);
+}
+
+.accordion-button:not(.collapsed) {
+    color: var(--text);
+    background: rgba(108, 140, 245, 0.10);
+}
+
+.accordion-body {
+    background: var(--card-bg);
+    color: var(--text);
+}
+
+.anchor {
+    scroll-margin-top: 92px;
+}
+
+/* ========================================
+   LOGIN PAGE SPECIFIC
+   ======================================== */
+.login-page {
+    height: 100vh;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+}
+
+.login-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+}
+
+.login-card .card-header {
+    background: transparent;
+    border-bottom: none;
+    padding: 25px 25px 5px;
+}
+
+.login-card .card-body {
+    padding: 25px;
+}
+
+.footer-custom {
+    text-align: center;
+    color: #ffffffcc;
+    margin-top: 30px;
+    font-size: 0.95rem;
+    letter-spacing: 0.02rem;
+}
+
+/* ========================================
+   UTILITIES
+   ======================================== */
+.loading-spinner {
+    display: none;
+    text-align: center;
+    padding: 20px;
+}
+
+.operation-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: none;
+}
+
+.last-update {
+    font-size: 0.8em;
+    color: var(--muted);
+    margin-top: 5px;
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+.pulse {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse-badge {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+@media (max-width: 768px) {
+    .trading-board-handle {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+        right: 8px;
+    }
+
+    .trading-board-handle span {
+        display: none;
+    }
+
+    .trading-board-modal .modal-dialog {
+        margin: 10px;
+    }
+
+    .trading-board-modal .session-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .trading-board-modal .pair-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .trading-board-modal .pair-symbol {
+        font-size: 0.9rem;
+    }
+
+    .trading-board-modal .direction-select {
+        width: 100%;
+    }
+
+    .trading-board-modal .session-body {
+        padding: 15px;
+    }
+
+    .brand-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .pill {
+        display: none;
+    }
+}
+
+/* ========================================
+   EMBED SPECIFIC STYLES
+   ======================================== */
+.embed-container {
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.theme-dark .embed-container {
+    background: var(--card-bg);
+}
+
+.embed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.embed-title {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.embed-status {
+    font-size: 0.9em;
+    color: var(--muted);
+}
+
+.embed-content {
+    position: relative;
+    min-height: 100px;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.theme-dark .loading-overlay {
+    background: rgba(15, 23, 42, 0.8);
+}
+
+.error-message {
+    color: #dc3545;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #dc3545;
+    border-radius: 4px;
+    background: var(--card-bg);
+}
+
+.metrics-container {
+    padding: 15px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.metric-card {
+    background: var(--section-bg);
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+    border: 1px solid var(--card-border);
+}
+
+.metric-value {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin: 5px 0;
+    color: var(--text);
+}
+
+.metric-label {
+    font-size: 0.9em;
+    color: var(--muted);
+}
+
+.connection-status {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 0.8em;
+    color: var(--text);
+}
+
+/* ========================================
+   DROPDOWN MENUS
+   ======================================== */
+.dropdown-menu {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+    color: var(--text);
+}
+
+.dropdown-item:hover {
+    background: var(--section-bg);
+    color: var(--text);
+}
+
+.dropdown-divider {
+    border-top-color: var(--card-border);
+}
+
+/* ========================================
+   MODAL OVERRIDES
+   ======================================== */
+.modal-content {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text);
+}
+
+.modal-header {
+    border-bottom-color: var(--card-border);
+}
+
+.modal-footer {
+    border-top-color: var(--card-border);
+}
+
+.btn-close {
+    filter: var(--bs-btn-close-filter, brightness(0) invert(1));
+}
+
+.theme-dark .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+@media print {
+    .trading-board-handle,
+    .btn,
+    .dropdown,
+    .action-btn {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+        color: black;
+    }
+
+    .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+}

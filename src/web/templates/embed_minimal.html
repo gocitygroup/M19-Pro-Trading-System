@@ -1,0 +1,65 @@
+{% extends "embed_base.html" %}
+
+{% block title %}Forex Monitor - Minimal{% endblock %}
+
+{% block content %}
+<div class="metrics-container">
+    <div class="connection-status">
+        <span class="status-indicator status-disconnected"></span>
+        <span class="status-text">Connecting...</span>
+    </div>
+    
+    <div class="metric-card">
+        <div class="metric-label">Total Profit/Loss</div>
+        <div class="metric-value" id="totalProfitLoss">$0.00</div>
+    </div>
+    
+    <div class="metric-card">
+        <div class="metric-label">Win Rate</div>
+        <div class="metric-value" id="winRate">0%</div>
+    </div>
+    
+    <div class="metric-card">
+        <div class="metric-label">Open Positions</div>
+        <div class="metric-value" id="openPositions">0</div>
+    </div>
+    
+    <div class="metric-card">
+        <div class="metric-label">Margin Level</div>
+        <div class="metric-value" id="marginLevel">0%</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+// Handle real-time updates
+socket.on('positions_update', (data) => {
+    // Update metrics
+    const account = data.account || {};
+    const summary = data.summary || {};
+    
+    // Update profit/loss
+    document.getElementById('totalProfitLoss').innerHTML = 
+        formatProfitLoss(account.total_profit || 0);
+    
+    // Update win rate
+    document.getElementById('winRate').textContent = 
+        formatNumber(account.win_rate || 0, 1) + '%';
+    
+    // Update open positions
+    document.getElementById('openPositions').textContent = 
+        data.positions ? data.positions.length : 0;
+    
+    // Update margin level
+    document.getElementById('marginLevel').textContent = 
+        formatNumber(account.margin_level || 0, 1) + '%';
+    
+    // Notify parent window
+    notifyParent('metrics_update', {
+        total_profit: account.total_profit,
+        win_rate: account.win_rate,
+        open_positions: data.positions ? data.positions.length : 0,
+        margin_level: account.margin_level
+    });
+});
+{% endblock %} 

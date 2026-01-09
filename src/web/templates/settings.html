@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Profit Monitor System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-cog"></i> System Settings</h2>
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-outline-secondary" href="{{ url_for('manual') }}">
+                            <i class="fas fa-book"></i> User Manual
+                        </a>
+                        <button class="btn btn-outline-secondary" id="themeToggleSettings">
+                            <i class="fas fa-moon"></i> Dark Mode
+                        </button>
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Tabbed Settings Interface -->
+                <ul class="nav nav-tabs" id="settingsTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="account-tab" data-bs-toggle="tab" 
+                                data-bs-target="#account" type="button" role="tab">
+                            <i class="fas fa-user"></i> Account
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="profit-monitor-tab" data-bs-toggle="tab" 
+                                data-bs-target="#profit-monitor" type="button" role="tab">
+                            <i class="fas fa-chart-line"></i> Profit Monitor
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="trading-bot-tab" data-bs-toggle="tab" 
+                                data-bs-target="#trading-bot" type="button" role="tab">
+                            <i class="fas fa-robot"></i> Trading Bot
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="settingsTabContent">
+                    <!-- Account Settings Tab -->
+                    <div class="tab-pane fade show active" id="account" role="tabpanel">
+                        <h5 class="mb-4"><i class="fas fa-user-cog"></i> Account Credentials</h5>
+                        <form method="POST" action="{{ url_for('settings') }}">
+                            <input type="hidden" name="settings_type" value="account">
+                            
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    New Username
+                                    <i class="fas fa-info-circle tooltip-icon" 
+                                       data-bs-toggle="tooltip" 
+                                       title="Change your login username"></i>
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       name="new_username" 
+                                       placeholder="Leave blank to keep current">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    New Password
+                                    <i class="fas fa-info-circle tooltip-icon" 
+                                       data-bs-toggle="tooltip" 
+                                       title="Change your login password"></i>
+                                </label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       name="new_password"
+                                       placeholder="Leave blank to keep current">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    Current Password <span class="text-danger">*</span>
+                                    <i class="fas fa-info-circle tooltip-icon" 
+                                       data-bs-toggle="tooltip" 
+                                       title="Required to verify your identity"></i>
+                                </label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       name="current_password"
+                                       placeholder="Required to make changes" 
+                                       required>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update Account Settings
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Profit Monitor Settings Tab -->
+                    <div class="tab-pane fade" id="profit-monitor" role="tabpanel">
+                        <form method="POST" action="{{ url_for('settings') }}" id="profitMonitorForm">
+                            <input type="hidden" name="settings_type" value="profit_monitor">
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5><i class="fas fa-sliders-h"></i> Profit Monitor Parameters</h5>
+                                <button type="button" class="btn btn-outline-secondary btn-sm reset-btn" 
+                                        onclick="resetToDefaults()">
+                                    <i class="fas fa-undo"></i> Reset to Defaults
+                                </button>
+                            </div>
+
+                            <!-- Profit Thresholds -->
+                            <div class="setting-group">
+                                <div class="setting-group-title">
+                                    <i class="fas fa-percentage"></i> Profit Thresholds
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Minimum Profit Percent
+                                            <i class="fas fa-info-circle tooltip-icon" 
+                                               data-bs-toggle="tooltip" 
+                                               title="Minimum profit percentage required before automatically closing a position. Set lower for quicker exits, higher for larger profits."></i>
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   name="min_profit_percent" 
+                                                   step="0.1"
+                                                   min="0.1"
+                                                   max="10.0"
+                                                   value="{{ profit_config.get('min_profit_percent', 0.5) }}"
+                                                   required>
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <small class="text-muted">Range: 0.1% - 10.0%</small>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Trailing Stop Percent
+                                            <i class="fas fa-info-circle tooltip-icon" 
+                                               data-bs-toggle="tooltip" 
+                                               title="Trailing stop percentage to protect profits. The position will close if profit falls by this percentage from the peak."></i>
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   name="trailing_stop_percent" 
+                                                   step="0.1"
+                                                   min="0.1"
+                                                   max="5.0"
+                                                   value="{{ profit_config.get('trailing_stop_percent', 0.2) }}"
+                                                   required>
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <small class="text-muted">Range: 0.1% - 5.0%</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Partial Close Settings -->
+                            <div class="setting-group">
+                                <div class="setting-group-title">
+                                    <i class="fas fa-chart-pie"></i> Partial Close Settings
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="partialCloseEnabled" 
+                                               name="partial_close_enabled"
+                                               {% if profit_config.get('partial_close_enabled', True) %}checked{% endif %}>
+                                        <label class="form-check-label" for="partialCloseEnabled">
+                                            Enable Partial Position Closing
+                                            <i class="fas fa-info-circle tooltip-icon" 
+                                               data-bs-toggle="tooltip" 
+                                               title="When enabled, the system can close a portion of a position to secure profits while leaving the rest open."></i>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="row" id="partialCloseOptions">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Partial Close Threshold
+                                            <i class="fas fa-info-circle tooltip-icon" 
+                                               data-bs-toggle="tooltip" 
+                                               title="Profit percentage threshold to trigger partial closing. Position must reach this profit before partial close is executed."></i>
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   name="partial_close_threshold" 
+                                                   step="0.1"
+                                                   min="0.5"
+                                                   max="20.0"
+                                                   value="{{ profit_config.get('partial_close_threshold', 1.0) }}"
+                                                   required>
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <small class="text-muted">Range: 0.5% - 20.0%</small>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Partial Close Percent
+                                            <i class="fas fa-info-circle tooltip-icon" 
+                                               data-bs-toggle="tooltip" 
+                                               title="Percentage of the position to close when threshold is reached. For example, 50% means half the position will be closed."></i>
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   name="partial_close_percent" 
+                                                   step="5"
+                                                   min="10"
+                                                   max="90"
+                                                   value="{{ profit_config.get('partial_close_percent', 50) }}"
+                                                   required>
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <small class="text-muted">Range: 10% - 90%</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Monitoring Settings -->
+                            <div class="setting-group">
+                                <div class="setting-group-title">
+                                    <i class="fas fa-clock"></i> Monitoring Settings
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Check Interval
+                                            <i class="fas fa-info-circle tooltip-icon" 
+                                               data-bs-toggle="tooltip" 
+                                               title="How often the profit monitor checks positions (in seconds). Lower values = more frequent checks but higher system load."></i>
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   name="check_interval" 
+                                                   step="1"
+                                                   min="1"
+                                                   max="3600"
+                                                   value="{{ profit_config.get('check_interval', 1800) }}"
+                                                   required>
+                                            <span class="input-group-text">sec</span>
+                                        </div>
+                                        <small class="text-muted">Range: 1 - 3600 seconds ({{ (profit_config.get('check_interval', 1800) / 60) | int }} minutes)</small>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Log Level
+                                            <i class="fas fa-info-circle tooltip-icon" 
+                                               data-bs-toggle="tooltip" 
+                                               title="Logging detail level. DEBUG = most detailed, ERROR = least detailed. Use DEBUG for troubleshooting."></i>
+                                        </label>
+                                        <select class="form-select" name="log_level" required>
+                                            <option value="DEBUG" {% if profit_config.get('log_level', 'INFO') == 'DEBUG' %}selected{% endif %}>DEBUG - Detailed</option>
+                                            <option value="INFO" {% if profit_config.get('log_level', 'INFO') == 'INFO' %}selected{% endif %}>INFO - Standard</option>
+                                            <option value="WARNING" {% if profit_config.get('log_level', 'INFO') == 'WARNING' %}selected{% endif %}>WARNING - Important</option>
+                                            <option value="ERROR" {% if profit_config.get('log_level', 'INFO') == 'ERROR' %}selected{% endif %}>ERROR - Critical Only</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Retry & Error Handling -->
+                            <div class="setting-group">
+                                <div class="setting-group-title">
+                                    <i class="fas fa-sync-alt"></i> Retry & Error Handling
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Max Retries
+                                            <i class="fas fa-info-circle tooltip-icon" 
+                                               data-bs-toggle="tooltip" 
+                                               title="Maximum number of retry attempts for failed operations. Higher values = more persistent but slower failure detection."></i>
+                                        </label>
+                                        <input type="number" 
+                                               class="form-control" 
+                                               name="max_retries" 
+                                               step="1"
+                                               min="1"
+                                               max="10"
+                                               value="{{ profit_config.get('max_retries', 3) }}"
+                                               required>
+                                        <small class="text-muted">Range: 1 - 10 attempts</small>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Retry Delay
+                                            <i class="fas fa-info-circle tooltip-icon" 
+                                               data-bs-toggle="tooltip" 
+                                               title="Delay between retry attempts (in seconds). Gives the system time to recover from temporary issues."></i>
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   name="retry_delay" 
+                                                   step="0.5"
+                                                   min="0.5"
+                                                   max="60"
+                                                   value="{{ profit_config.get('retry_delay', 1) }}"
+                                                   required>
+                                            <span class="input-group-text">sec</span>
+                                        </div>
+                                        <small class="text-muted">Range: 0.5 - 60 seconds</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Options -->
+                            <div class="setting-group">
+                                <div class="setting-group-title">
+                                    <i class="fas fa-cogs"></i> Additional Options
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="enableMarketCheck" 
+                                               name="enable_market_check"
+                                               {% if profit_config.get('enable_market_check', True) %}checked{% endif %}>
+                                        <label class="form-check-label" for="enableMarketCheck">
+                                            Enable Market Hours Check
+                                            <i class="fas fa-info-circle tooltip-icon" 
+                                               data-bs-toggle="tooltip" 
+                                               title="When enabled, the monitor checks if the market is open before executing operations. Prevents errors during closed market hours."></i>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Current Password for Security -->
+                            <div class="alert alert-info">
+                                <i class="fas fa-shield-alt"></i> For security, your current password is required to update profit monitor settings.
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    Current Password <span class="text-danger">*</span>
+                                </label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       name="current_password"
+                                       placeholder="Required to save changes" 
+                                       required>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-secondary" onclick="location.reload()">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save"></i> Save Profit Monitor Settings
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Trading Bot Settings Tab -->
+                    <div class="tab-pane fade" id="trading-bot" role="tabpanel">
+                        <form method="POST" action="{{ url_for('settings') }}" id="tradingBotForm">
+                            <input type="hidden" name="settings_type" value="trading_bot">
+
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5><i class="fas fa-robot"></i> Market Session Trading Bot Parameters</h5>
+                                <button type="button" class="btn btn-outline-secondary btn-sm reset-btn" onclick="resetTradingBotDefaults()">
+                                    <i class="fas fa-undo"></i> Reset to Defaults
+                                </button>
+                            </div>
+
+                            <!-- Position Management -->
+                            <div class="setting-group">
+                                <div class="setting-group-title">
+                                    <i class="fas fa-layer-group"></i> Position Management
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">
+                                            Max Positions
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip"
+                                               title="Maximum concurrent positions the bot can hold. Set to 1 for direct market entries."></i>
+                                        </label>
+                                        <input type="number" class="form-control" name="max_positions"
+                                               min="1" max="20" step="1"
+                                               value="{{ trading_config.get('max_positions', 4) }}" required>
+                                        <small class="text-muted">Range: 1 - 20 positions</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">
+                                            Order Expiry (minutes)
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip"
+                                               title="Pending orders older than this are cancelled. Ignored when max positions is 1."></i>
+                                        </label>
+                                        <input type="number" class="form-control" name="order_expiry_minutes"
+                                               min="1" max="240" step="1"
+                                               value="{{ trading_config.get('order_expiry_minutes', 30) }}" required>
+                                        <small class="text-muted">Range: 1 - 240 minutes</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">
+                                            Session Check Interval
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip"
+                                               title="How often the bot evaluates active sessions and orders (seconds). Lower is more responsive."></i>
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="session_check_interval"
+                                                   min="1" max="300" step="1"
+                                                   value="{{ trading_config.get('session_check_interval', 2) }}" required>
+                                            <span class="input-group-text">sec</span>
+                                        </div>
+                                        <small class="text-muted">Range: 1 - 300 seconds</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Entry Controls -->
+                            <div class="setting-group">
+                                <div class="setting-group-title">
+                                    <i class="fas fa-sign-in-alt"></i> Entry Controls
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">
+                                            Trade Volume (lots)
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip"
+                                               title="Base lot size per position. Ensure it matches account risk."></i>
+                                        </label>
+                                        <input type="number" class="form-control" name="volume"
+                                               min="0.01" max="5" step="0.01"
+                                               value="{{ trading_config.get('volume', 0.05) }}" required>
+                                        <small class="text-muted">Range: 0.01 - 5.00 lots</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">
+                                            Scalp Multiplier
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip"
+                                               title="Scalping aggression multiplier for tighter opportunities."></i>
+                                        </label>
+                                        <input type="number" class="form-control" name="scalp_multiplier"
+                                               min="0" max="5" step="0.1"
+                                               value="{{ trading_config.get('scalp_multiplier', 0.5) }}" required>
+                                        <small class="text-muted">Range: 0.0 - 5.0</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">
+                                            Base Entry Pips
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip"
+                                               title="Baseline pip distance for entries before multipliers."></i>
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="base_entry_pips"
+                                                   min="0" max="50" step="1"
+                                                   value="{{ trading_config.get('base_entry_pips', 1) }}" required>
+                                            <span class="input-group-text">pips</span>
+                                        </div>
+                                        <small class="text-muted">Range: 0 - 50 pips</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Spread & Execution -->
+                            <div class="setting-group">
+                                <div class="setting-group-title">
+                                    <i class="fas fa-tachometer-alt"></i> Spread & Execution
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Min Spread Multiplier
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip"
+                                               title="Minimum acceptable spread relative to average. Higher values skip wide spreads."></i>
+                                        </label>
+                                        <input type="number" class="form-control" name="min_spread_multiplier"
+                                               min="0.5" max="10" step="0.1"
+                                               value="{{ trading_config.get('min_spread_multiplier', 1.0) }}" required>
+                                        <small class="text-muted">Range: 0.5 - 10.0</small>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Notes
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip"
+                                               title="Use responsive check intervals for fast markets; increase expiry when trading overlaps."></i>
+                                        </label>
+                                        <div class="alert alert-light border">
+                                            Changes take effect immediately for new evaluations. Pending orders respect updated expiry on next sweep.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <i class="fas fa-bolt"></i> Settings save instantly for active sessions after submission.
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    Current Password <span class="text-danger">*</span>
+                                </label>
+                                <input type="password" class="form-control" name="current_password"
+                                       placeholder="Required to save changes" required>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-secondary" onclick="location.reload()">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save"></i> Save Trading Bot Settings
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+
+        // Toggle partial close options visibility
+        const partialCloseCheckbox = document.getElementById('partialCloseEnabled');
+        const partialCloseOptions = document.getElementById('partialCloseOptions');
+        
+        function togglePartialCloseOptions() {
+            const inputs = partialCloseOptions.querySelectorAll('input');
+            if (partialCloseCheckbox.checked) {
+                partialCloseOptions.style.opacity = '1';
+                inputs.forEach(input => input.disabled = false);
+            } else {
+                partialCloseOptions.style.opacity = '0.5';
+                inputs.forEach(input => input.disabled = true);
+            }
+        }
+        
+        partialCloseCheckbox.addEventListener('change', togglePartialCloseOptions);
+        togglePartialCloseOptions(); // Initialize on load
+
+        // Reset to defaults
+        function resetToDefaults() {
+            if (confirm('Are you sure you want to reset all profit monitor settings to default values?')) {
+                // Default values
+                document.querySelector('[name="min_profit_percent"]').value = 0.5;
+                document.querySelector('[name="trailing_stop_percent"]').value = 0.2;
+                document.querySelector('[name="check_interval"]').value = 1800;
+                document.querySelector('[name="partial_close_enabled"]').checked = true;
+                document.querySelector('[name="partial_close_threshold"]').value = 1.0;
+                document.querySelector('[name="partial_close_percent"]').value = 50;
+                document.querySelector('[name="max_retries"]').value = 3;
+                document.querySelector('[name="retry_delay"]').value = 1;
+                document.querySelector('[name="enable_market_check"]').checked = true;
+                document.querySelector('[name="log_level"]').value = 'INFO';
+                
+                togglePartialCloseOptions();
+            }
+        }
+
+        // Update check interval display in minutes
+        document.querySelector('[name="check_interval"]').addEventListener('input', function(e) {
+            const seconds = parseInt(e.target.value);
+            const minutes = Math.floor(seconds / 60);
+            const secondsRemainder = seconds % 60;
+            const display = minutes > 0 ? `${minutes} minutes` : `${secondsRemainder} seconds`;
+            e.target.nextElementSibling.textContent = `Range: 1 - 3600 seconds (${display})`;
+        });
+
+        // Trading bot defaults reset
+        const tradingDefaults = {{ trading_defaults | tojson }};
+        const tradingBotForm = document.getElementById('tradingBotForm');
+
+        function resetTradingBotDefaults() {
+            if (!tradingDefaults || !tradingBotForm) return;
+            if (confirm('Reset trading bot parameters to defaults?')) {
+                tradingBotForm.querySelector('[name="max_positions"]').value = tradingDefaults.max_positions ?? 4;
+                tradingBotForm.querySelector('[name="volume"]').value = tradingDefaults.volume ?? 0.05;
+                tradingBotForm.querySelector('[name="scalp_multiplier"]').value = tradingDefaults.scalp_multiplier ?? 0.5;
+                tradingBotForm.querySelector('[name="base_entry_pips"]').value = tradingDefaults.base_entry_pips ?? 1;
+                tradingBotForm.querySelector('[name="min_spread_multiplier"]').value = tradingDefaults.min_spread_multiplier ?? 1.0;
+                tradingBotForm.querySelector('[name="order_expiry_minutes"]').value = tradingDefaults.order_expiry_minutes ?? 30;
+                tradingBotForm.querySelector('[name="session_check_interval"]').value = tradingDefaults.session_check_interval ?? 2;
+            }
+        }
+    </script>
+</body>
+</html> 

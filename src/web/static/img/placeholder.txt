@@ -1,0 +1,6 @@
+This directory is ready for your Gocity Group logo files.
+Please add:
+- logo1.png (main logo)
+- logo2.png (secondary logo)
+
+The application will automatically hide logos if files are missing. 

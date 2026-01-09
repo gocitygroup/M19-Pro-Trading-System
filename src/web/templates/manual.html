@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Manual - G-SignalX M19 Trading System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <div class="manual-header">
+        <div class="container">
+            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="/static/img/group-icon.png" alt="Gocity Group Logo" style="height: 44px;" onerror="this.style.display='none'">
+                    <div>
+                        <p class="pill mb-2"><i class="fas fa-shield-halved"></i> Corporate Trading Operations Manual</p>
+                        <h1 class="brand-title">G-SignalX M19 Trading System</h1>
+                        <p class="brand-subtitle">A practical, end-to-end manual for beginners, intermediate, and advanced traders — across scalping, day trading, swing, and position trading.</p>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-light" id="themeToggleManual">
+                        <i class="fas fa-moon"></i> Dark Mode
+                    </button>
+                    <a class="btn btn-sm btn-outline-light" href="{{ url_for('index') }}">
+                        <i class="fas fa-arrow-left"></i> Dashboard
+                    </a>
+                    <a class="btn btn-sm btn-outline-light" href="{{ url_for('settings') }}">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-4">
+        <div class="row g-3">
+            <div class="col-lg-4 order-lg-2">
+                <div class="card p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h5 class="mb-0"><i class="fas fa-list"></i> Contents</h5>
+                        <span class="chip"><i class="fas fa-mobile-screen"></i> Mobile-ready</span>
+                    </div>
+                    <div class="toc small">
+                        <div class="mb-2"><a href="#what-this-is"><strong>1.</strong> What this system is</a></div>
+                        <div class="mb-2"><a href="#safety-first"><strong>2.</strong> Safety-first setup</a></div>
+                        <div class="mb-2"><a href="#daily-workflow"><strong>3.</strong> Daily workflow</a></div>
+                        <div class="mb-2"><a href="#experience-levels"><strong>4.</strong> Beginner / Intermediate / Advanced</a></div>
+                        <div class="mb-2"><a href="#trading-styles"><strong>5.</strong> Scalping / Day / Swing / Position</a></div>
+                        <div class="mb-2"><a href="#risk-management"><strong>6.</strong> Risk management</a></div>
+                        <div class="mb-2"><a href="#troubleshooting"><strong>7.</strong> Troubleshooting</a></div>
+                        <div class="mb-2"><a href="#glossary"><strong>8.</strong> Glossary</a></div>
+                        <div class="mb-2"><a href="#disclaimer"><strong>9.</strong> Disclaimers</a></div>
+                    </div>
+                </div>
+
+                <div class="card p-3 mt-3">
+                    <h5 class="mb-2"><i class="fas fa-bolt"></i> Quick Start (2 minutes)</h5>
+                    <ol class="small mb-0">
+                        <li>Open MetaTrader 5 and log in.</li>
+                        <li>Start the Web Dashboard and bots (your normal startup method).</li>
+                        <li>Login to the dashboard, open <span class="kbd">User Manual</span> from your profile menu.</li>
+                        <li>Go to <span class="kbd">Settings</span>, set conservative values first.</li>
+                        <li>Use demo mode before live trading.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="col-lg-8 order-lg-1">
+                <div class="card p-4 mb-3">
+                    <h4 class="anchor" id="what-this-is"><i class="fas fa-building"></i> 1) What this system is</h4>
+                    <p class="mb-2">
+                        <strong>G-SignalX M19 Trading System</strong> is a trading operations dashboard designed to help traders
+                        <strong>monitor positions, manage exits, and standardize session-based execution</strong>.
+                        You can use it with <strong>any signal source</strong> (manual chart analysis, indicator alerts, paid signals, or proprietary models).
+                    </p>
+                    <div class="callout small">
+                        <strong>Important:</strong> This system supports multiple instrument types depending on what your broker exposes in MT5
+                        (e.g., FX pairs, metals, indices, crypto CFDs). Your risk model must be aligned to the instrument’s volatility.
+                    </div>
+                    <div class="row g-2 mt-3">
+                        <div class="col-md-6">
+                            <div class="chip w-100"><i class="fas fa-eye"></i> Real-time position visibility</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chip w-100"><i class="fas fa-shield"></i> Consistent risk controls (config-driven)</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chip w-100"><i class="fas fa-clock"></i> Session-oriented workflows</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chip w-100"><i class="fas fa-gears"></i> Central settings and repeatability</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-4 mb-3">
+                    <h4 class="anchor" id="safety-first"><i class="fas fa-shield-halved"></i> 2) Safety-first setup</h4>
+                    <div class="accordion" id="setupAccordion">
+                        <div class="accordion-item mb-2">
+                            <h2 class="accordion-header" id="setupOne">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#setupOneBody" aria-expanded="true" aria-controls="setupOneBody">
+                                    Demo-first policy (recommended for all traders)
+                                </button>
+                            </h2>
+                            <div id="setupOneBody" class="accordion-collapse collapse show" aria-labelledby="setupOne" data-bs-parent="#setupAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-0">
+                                        <li><strong>Start on a demo account</strong> to validate execution, spreads, and risk sizing.</li>
+                                        <li><strong>Test each change one at a time</strong> (volume, trailing, check intervals) and log outcomes.</li>
+                                        <li><strong>Graduation rule:</strong> go live only after 2–4 weeks of stable behavior.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item mb-2">
+                            <h2 class="accordion-header" id="setupTwo">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#setupTwoBody" aria-expanded="false" aria-controls="setupTwoBody">
+                                    Confirm operational readiness (before every session)
+                                </button>
+                            </h2>
+                            <div id="setupTwoBody" class="accordion-collapse collapse" aria-labelledby="setupTwo" data-bs-parent="#setupAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-0">
+                                        <li>MT5 is open and connected.</li>
+                                        <li>Dashboard shows <strong>Connected</strong> status.</li>
+                                        <li>Profit Monitor / bots are running (if you use automation).</li>
+                                        <li>High-impact news is checked and respected.</li>
+                                        <li>Max daily loss and max daily profit objectives are defined.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="setupThree">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#setupThreeBody" aria-expanded="false" aria-controls="setupThreeBody">
+                                    Conservative starter settings (baseline)
+                                </button>
+                            </h2>
+                            <div id="setupThreeBody" class="accordion-collapse collapse" aria-labelledby="setupThree" data-bs-parent="#setupAccordion">
+                                <div class="accordion-body">
+                                    <p class="small mb-2">Use this as a safe baseline; adjust to your broker + instrument volatility:</p>
+                                    <pre class="mb-0"><code>Trading Bot
+- volume: 0.01 to 0.05 (small lots)
+- session_check_interval: 2 to 10 sec
+
+Profit Monitor
+- min_profit_percent: 0.3 to 1.0%
+- trailing_stop_percent: 0.2 to 0.6%
+- check_interval: 10 to 60 sec (faster for scalps, slower for swings)</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-4 mb-3">
+                    <h4 class="anchor" id="daily-workflow"><i class="fas fa-route"></i> 3) Daily workflow (repeatable operations)</h4>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="callout h-100">
+                                <strong>Pre-session</strong>
+                                <ul class="small mb-0 mt-2">
+                                    <li>Define session bias (Buy/Sell/Neutral).</li>
+                                    <li>Confirm spreads and liquidity.</li>
+                                    <li>Set risk limits (daily loss cap).</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="callout h-100">
+                                <strong>During session</strong>
+                                <ul class="small mb-0 mt-2">
+                                    <li>Monitor open positions and exposure.</li>
+                                    <li>Use partial closes + trailing to reduce emotion.</li>
+                                    <li>Respect news and volatility spikes.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="callout h-100">
+                                <strong>Post-session</strong>
+                                <ul class="small mb-0 mt-2">
+                                    <li>Review P&amp;L + screenshots/notes.</li>
+                                    <li>Tag mistakes (overtrade, revenge, late entry).</li>
+                                    <li>Backup working settings.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-4 mb-3">
+                    <h4 class="anchor" id="experience-levels"><i class="fas fa-layer-group"></i> 4) Experience levels (how to use the system)</h4>
+                    <div class="accordion" id="levelsAccordion">
+                        <div class="accordion-item mb-2">
+                            <h2 class="accordion-header" id="lvlBeginner">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#lvlBeginnerBody" aria-expanded="true" aria-controls="lvlBeginnerBody">
+                                    Beginner Traders (focus: safety + consistency)
+                                </button>
+                            </h2>
+                            <div id="lvlBeginnerBody" class="accordion-collapse collapse show" aria-labelledby="lvlBeginner" data-bs-parent="#levelsAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-2">
+                                        <li><strong>Goal:</strong> learn execution and risk control, not “big wins”.</li>
+                                        <li><strong>Use the dashboard for:</strong> monitoring, simple exits, and preventing overtrading.</li>
+                                        <li><strong>Avoid:</strong> high leverage, multiple correlated positions, trading during major news.</li>
+                                    </ul>
+                                    <div class="callout small mb-0">
+                                        Suggested routine: choose 1–3 instruments, trade 1 session, keep lots small, and record every trade.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item mb-2">
+                            <h2 class="accordion-header" id="lvlIntermediate">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#lvlIntermediateBody" aria-expanded="false" aria-controls="lvlIntermediateBody">
+                                    Intermediate Traders (focus: edge execution + process)
+                                </button>
+                            </h2>
+                            <div id="lvlIntermediateBody" class="accordion-collapse collapse" aria-labelledby="lvlIntermediate" data-bs-parent="#levelsAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-0">
+                                        <li><strong>Goal:</strong> standardize entries/exits across sessions with controlled risk.</li>
+                                        <li><strong>Use the dashboard for:</strong> session planning, direction mapping, disciplined partials + trailing.</li>
+                                        <li><strong>Optimize:</strong> check intervals, profit thresholds, and exposure limits per instrument group.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="lvlAdvanced">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#lvlAdvancedBody" aria-expanded="false" aria-controls="lvlAdvancedBody">
+                                    Advanced Traders (focus: portfolio + automation governance)
+                                </button>
+                            </h2>
+                            <div id="lvlAdvancedBody" class="accordion-collapse collapse" aria-labelledby="lvlAdvanced" data-bs-parent="#levelsAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-2">
+                                        <li><strong>Goal:</strong> enforce policy and risk governance at scale.</li>
+                                        <li><strong>Use the dashboard for:</strong> monitoring KPIs, controlled automation, and emergency intervention.</li>
+                                        <li><strong>Best practice:</strong> maintain separate configs for scalping/day/swing, and treat changes as “deployments”.</li>
+                                    </ul>
+                                    <div class="callout small mb-0">
+                                        Consider adding internal SOPs: pre-trade checklist, maximum correlated exposure, and a shutdown protocol.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-4 mb-3">
+                    <h4 class="anchor" id="trading-styles"><i class="fas fa-chart-line"></i> 5) Trading styles (recommended usage patterns)</h4>
+                    <div class="accordion" id="stylesAccordion">
+                        <div class="accordion-item mb-2">
+                            <h2 class="accordion-header" id="styleScalp">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#styleScalpBody" aria-expanded="true" aria-controls="styleScalpBody">
+                                    Scalping (minutes) — speed + strict exits
+                                </button>
+                            </h2>
+                            <div id="styleScalpBody" class="accordion-collapse collapse show" aria-labelledby="styleScalp" data-bs-parent="#stylesAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-2">
+                                        <li><strong>Best when:</strong> spreads are tight and liquidity is strong (often overlaps).</li>
+                                        <li><strong>System focus:</strong> fast check intervals + early partials + tight trailing.</li>
+                                    </ul>
+                                    <pre class="mb-0"><code>Typical ranges (adjust per instrument)
+- volume: small
+- profit monitor check_interval: 5–15 sec
+- min_profit_percent: 0.1–0.4%
+- trailing_stop_percent: 0.05–0.2%</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item mb-2">
+                            <h2 class="accordion-header" id="styleDay">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#styleDayBody" aria-expanded="false" aria-controls="styleDayBody">
+                                    Day Trading (minutes to hours) — session plans + controlled exposure
+                                </button>
+                            </h2>
+                            <div id="styleDayBody" class="accordion-collapse collapse" aria-labelledby="styleDay" data-bs-parent="#stylesAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-2">
+                                        <li><strong>Best when:</strong> you can actively monitor and manage multiple trades.</li>
+                                        <li><strong>System focus:</strong> session direction mapping, scalable partial closes, and consistent rules.</li>
+                                    </ul>
+                                    <pre class="mb-0"><code>Typical ranges
+- profit monitor check_interval: 15–60 sec
+- min_profit_percent: 0.5–1.5%
+- trailing_stop_percent: 0.2–0.8%</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item mb-2">
+                            <h2 class="accordion-header" id="styleSwing">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#styleSwingBody" aria-expanded="false" aria-controls="styleSwingBody">
+                                    Swing Trading (days) — fewer trades, bigger targets
+                                </button>
+                            </h2>
+                            <div id="styleSwingBody" class="accordion-collapse collapse" aria-labelledby="styleSwing" data-bs-parent="#stylesAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-2">
+                                        <li><strong>Best when:</strong> you prefer planning and higher timeframe confirmation.</li>
+                                        <li><strong>System focus:</strong> slower monitoring intervals + wider trailing + disciplined scaling.</li>
+                                    </ul>
+                                    <pre class="mb-0"><code>Typical ranges
+- profit monitor check_interval: 60–300 sec
+- min_profit_percent: 1.0–3.0%
+- trailing_stop_percent: 0.5–1.5%</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="stylePosition">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#stylePositionBody" aria-expanded="false" aria-controls="stylePositionBody">
+                                    Position Trading (weeks+) — governance and risk policy
+                                </button>
+                            </h2>
+                            <div id="stylePositionBody" class="accordion-collapse collapse" aria-labelledby="stylePosition" data-bs-parent="#stylesAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-2">
+                                        <li><strong>Best when:</strong> you manage a portfolio and can hold through noise.</li>
+                                        <li><strong>System focus:</strong> staged profit locking and strict correlation management.</li>
+                                    </ul>
+                                    <pre class="mb-0"><code>Typical ranges
+- profit monitor check_interval: 300–900 sec
+- min_profit_percent: 3.0–10.0%
+- trailing_stop_percent: 1.0–3.0%</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-4 mb-3">
+                    <h4 class="anchor" id="risk-management"><i class="fas fa-triangle-exclamation"></i> 6) Risk management (non-negotiables)</h4>
+                    <ul class="mb-2">
+                        <li><strong>Risk per trade:</strong> define a fixed rule (e.g., 0.25%–1.0% of equity).</li>
+                        <li><strong>Daily loss limit:</strong> stop trading at your cap (system discipline beats “hope”).</li>
+                        <li><strong>Correlation control:</strong> avoid stacking highly correlated instruments in the same direction.</li>
+                        <li><strong>News discipline:</strong> high-impact events can invalidate technical logic instantly.</li>
+                    </ul>
+                    <div class="callout small mb-0">
+                        If you’re unsure, reduce size first. Most failures come from <strong>oversizing + overtrading</strong>, not from missing an entry.
+                    </div>
+                </div>
+
+                <div class="card p-4 mb-3">
+                    <h4 class="anchor" id="troubleshooting"><i class="fas fa-screwdriver-wrench"></i> 7) Troubleshooting</h4>
+                    <div class="accordion" id="troubleAccordion">
+                        <div class="accordion-item mb-2">
+                            <h2 class="accordion-header" id="t1">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#t1Body" aria-expanded="true" aria-controls="t1Body">
+                                    Dashboard says “Disconnected”
+                                </button>
+                            </h2>
+                            <div id="t1Body" class="accordion-collapse collapse show" aria-labelledby="t1" data-bs-parent="#troubleAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-0">
+                                        <li>Confirm the web server is running.</li>
+                                        <li>Refresh the page and try <strong>Reconnect</strong>.</li>
+                                        <li>Verify firewall rules allow the configured port.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item mb-2">
+                            <h2 class="accordion-header" id="t2">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#t2Body" aria-expanded="false" aria-controls="t2Body">
+                                    No positions show up
+                                </button>
+                            </h2>
+                            <div id="t2Body" class="accordion-collapse collapse" aria-labelledby="t2" data-bs-parent="#troubleAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-0">
+                                        <li>Confirm you have open positions in MT5 on the same account.</li>
+                                        <li>Click <strong>Refresh Data</strong> and wait 10–20 seconds.</li>
+                                        <li>Ensure the MT5 Python integration is available on this machine.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="t3">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#t3Body" aria-expanded="false" aria-controls="t3Body">
+                                    Orders or closes fail / reject
+                                </button>
+                            </h2>
+                            <div id="t3Body" class="accordion-collapse collapse" aria-labelledby="t3" data-bs-parent="#troubleAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-0">
+                                        <li>Check symbol availability, market hours, and trading permissions.</li>
+                                        <li>Reduce lot size and confirm min/max lot constraints.</li>
+                                        <li>Widen tolerance if spreads are elevated.</li>
+                                        <li>Review logs for broker error messages.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-4 mb-3">
+                    <h4 class="anchor" id="glossary"><i class="fas fa-book-open"></i> 8) Glossary</h4>
+                    <div class="row g-2 small">
+                        <div class="col-md-6"><strong>Session bias</strong>: Direction intent for a time window (Buy/Sell/Neutral).</div>
+                        <div class="col-md-6"><strong>Trailing stop (%)</strong>: A dynamic exit that locks profit as price moves.</div>
+                        <div class="col-md-6"><strong>Partial close</strong>: Close part of a position to secure gains and reduce risk.</div>
+                        <div class="col-md-6"><strong>Correlation</strong>: Instruments moving together, amplifying risk.</div>
+                    </div>
+                </div>
+
+                <div class="card p-4">
+                    <h4 class="anchor" id="disclaimer"><i class="fas fa-scale-balanced"></i> 9) Disclaimers</h4>
+                    <p class="small mb-2">
+                        Trading involves risk. This system provides operational tooling and automation support; it does not guarantee profits.
+                        Past performance does not guarantee future results. Use proper risk management and comply with your local regulations.
+                    </p>
+                    <p class="small mb-0 muted">
+                        Support: <strong>services@gocitygroup.org</strong> • Version: <strong>1.0</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

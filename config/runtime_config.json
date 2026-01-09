@@ -1,0 +1,112 @@
+{
+    "profit_monitor": {
+        "min_profit_percent": 0.5,
+        "_metadata": {
+            "min_profit_percent": {
+                "updated_at": "2025-12-12T16:51:32.044230",
+                "old_value": 0.5,
+                "new_value": 0.5
+            },
+            "trailing_stop_percent": {
+                "updated_at": "2025-12-12T16:51:32.046772",
+                "old_value": 0.2,
+                "new_value": 0.7
+            },
+            "check_interval": {
+                "updated_at": "2025-12-12T16:51:32.048382",
+                "old_value": 1800,
+                "new_value": 1800
+            },
+            "partial_close_enabled": {
+                "updated_at": "2025-12-12T16:51:32.056335",
+                "old_value": true,
+                "new_value": true
+            },
+            "partial_close_threshold": {
+                "updated_at": "2025-12-12T16:51:32.049822",
+                "old_value": 1.0,
+                "new_value": 1.0
+            },
+            "partial_close_percent": {
+                "updated_at": "2025-12-12T16:51:32.051442",
+                "old_value": 50,
+                "new_value": 50
+            },
+            "max_retries": {
+                "updated_at": "2025-12-12T16:51:32.053117",
+                "old_value": 3,
+                "new_value": 3
+            },
+            "retry_delay": {
+                "updated_at": "2025-12-12T16:51:32.054724",
+                "old_value": 1,
+                "new_value": 1.0
+            },
+            "enable_market_check": {
+                "updated_at": "2025-12-12T16:51:32.057923",
+                "old_value": true,
+                "new_value": true
+            },
+            "log_level": {
+                "updated_at": "2025-12-12T16:51:32.059535",
+                "old_value": "INFO",
+                "new_value": "INFO"
+            }
+        },
+        "trailing_stop_percent": 0.7,
+        "check_interval": 1800,
+        "partial_close_enabled": true,
+        "partial_close_threshold": 1.0,
+        "partial_close_percent": 50,
+        "max_retries": 3,
+        "retry_delay": 1.0,
+        "enable_market_check": true,
+        "log_level": "INFO"
+    },
+    "trading_bot": {
+        "max_positions": 4,
+        "_metadata": {
+            "max_positions": {
+                "updated_at": "2025-12-11T16:30:22.939611",
+                "old_value": null,
+                "new_value": 4
+            },
+            "volume": {
+                "updated_at": "2025-12-11T16:30:22.940236",
+                "old_value": null,
+                "new_value": 0.1
+            },
+            "scalp_multiplier": {
+                "updated_at": "2025-12-11T16:30:22.940784",
+                "old_value": null,
+                "new_value": 0.5
+            },
+            "base_entry_pips": {
+                "updated_at": "2025-12-11T16:30:22.941376",
+                "old_value": null,
+                "new_value": 1
+            },
+            "min_spread_multiplier": {
+                "updated_at": "2025-12-11T16:30:22.942089",
+                "old_value": null,
+                "new_value": 1.0
+            },
+            "order_expiry_minutes": {
+                "updated_at": "2025-12-11T16:30:22.942685",
+                "old_value": null,
+                "new_value": 30
+            },
+            "session_check_interval": {
+                "updated_at": "2025-12-11T16:30:22.944751",
+                "old_value": null,
+                "new_value": 60
+            }
+        },
+        "volume": 0.1,
+        "scalp_multiplier": 0.5,
+        "base_entry_pips": 1,
+        "min_spread_multiplier": 1.0,
+        "order_expiry_minutes": 30,
+        "session_check_interval": 60
+    }
+}
