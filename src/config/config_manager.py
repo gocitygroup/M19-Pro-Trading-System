@@ -214,6 +214,22 @@ class ConfigurationManager:
             True if successful
         """
         return self.set_section('trading_bot', updates)
+
+    def get_profit_scouting_config(self) -> Dict[str, Any]:
+        """Get profit scouting configuration with metadata"""
+        return self.get('profit_scouting', default={})
+
+    def update_profit_scouting_config(self, updates: Dict[str, Any]) -> bool:
+        """
+        Update profit scouting configuration
+
+        Args:
+            updates: Dictionary of configuration updates
+
+        Returns:
+            True if successful
+        """
+        return self.set_section('profit_scouting', updates)
     
     def reset_to_defaults(self, section: str, defaults: Dict[str, Any]) -> bool:
         """
@@ -274,3 +290,8 @@ def initialize_from_static_config(static_config: Dict[str, Any]):
         trading_config = static_config.get('trading_bot', {})
         manager.set_section('trading_bot', trading_config, notify=False)
         logger.info("Initialized trading bot config from static config")
+
+    if not manager.get('profit_scouting'):
+        profit_scouting_config = static_config.get('profit_scouting', {})
+        manager.set_section('profit_scouting', profit_scouting_config, notify=False)
+        logger.info("Initialized profit scouting config from static config")

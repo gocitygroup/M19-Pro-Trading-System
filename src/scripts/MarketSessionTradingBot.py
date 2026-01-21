@@ -79,6 +79,9 @@ class MarketSessionTrader:
         
         # Bot status file path
         self.status_file = os.path.join(project_root, 'bot_status.json')
+        
+        # Track last seen automation symbols so we can stop trading when signals drop
+        self._last_automation_symbols = set()
 
     def get_db_connection(self):
         """Get a database connection"""
@@ -408,14 +411,30 @@ class MarketSessionTrader:
                             AND sp.trade_direction != 'neutral'
                         ''', (session['id'],))
                         pairs = cursor.fetchall()
+
+                        # Optionally include automation-driven active pairs (additive; no change if empty/missing)
+                        auto_buy, auto_sell = self._get_automation_active_pairs(conn)
                         
+                        manual_buy_pairs = {row['symbol'] for row in pairs if row['trade_direction'] == 'buy'}
+                        manual_sell_pairs = {row['symbol'] for row in pairs if row['trade_direction'] == 'sell'}
+
+                        buy_pairs = set(manual_buy_pairs)
+                        sell_pairs = set(manual_sell_pairs)
+                        buy_pairs.update(auto_buy)
+                        sell_pairs.update(auto_sell)
+
                         session_data = {
                             'name': session['name'],
                             'start_time': start_time,
                             'end_time': end_time,
                             'volatility_factor': session['volatility_factor'],
-                            'buy_pairs': [row['symbol'] for row in pairs if row['trade_direction'] == 'buy'],
-                            'sell_pairs': [row['symbol'] for row in pairs if row['trade_direction'] == 'sell']
+                            'buy_pairs': sorted(list(buy_pairs)),
+                            'sell_pairs': sorted(list(sell_pairs)),
+                            # Extra fields for automation-aware management (non-breaking: core logic uses buy/sell_pairs)
+                            'manual_buy_pairs': sorted(list(manual_buy_pairs)),
+                            'manual_sell_pairs': sorted(list(manual_sell_pairs)),
+                            'auto_buy_pairs': sorted(list(set(auto_buy))),
+                            'auto_sell_pairs': sorted(list(set(auto_sell))),
                         }
                         active_sessions.append((session['name'], session_data))
                 
@@ -428,11 +447,109 @@ class MarketSessionTrader:
             logging.error(f"Error getting active sessions: {str(e)}")
             return []
 
+    def _get_automation_active_pairs(self, conn) -> Tuple[List[str], List[str]]:
+        """
+        Read automation active pairs published by the GSignalX automation runner.
+
+        - Additive to existing session_pairs directions.
+        - Safe if the automation tables are not present (returns empty).
+        """
+        try:
+            cursor = conn.execute(
+                '''
+                SELECT ap.symbol, ap.direction
+                FROM automation_active_pairs ap
+                JOIN currency_pairs cp ON cp.symbol = ap.symbol
+                WHERE ap.expires_at > CURRENT_TIMESTAMP
+                AND cp.is_active = 1
+                '''
+            )
+            rows = cursor.fetchall()
+            buy_pairs = [row['symbol'] for row in rows if row['direction'] == 'buy']
+            sell_pairs = [row['symbol'] for row in rows if row['direction'] == 'sell']
+            return buy_pairs, sell_pairs
+        except sqlite3.OperationalError:
+            # Table doesn't exist (runner not installed/migrated) => keep existing behavior
+            return [], []
+        except Exception as e:
+            logging.warning(f"Automation active pairs read failed: {str(e)}")
+            return [], []
+
+    def _get_current_automation_active_symbols(self) -> set:
+        """
+        Return currently active automation symbols (buy + sell) from the DB.
+
+        Used to stop trading/cancel pending orders when the automation signal is no longer active.
+        Safe if automation tables are not present.
+        """
+        try:
+            conn = self.get_db_connection()
+            try:
+                auto_buy, auto_sell = self._get_automation_active_pairs(conn)
+                return set(auto_buy) | set(auto_sell)
+            finally:
+                conn.close()
+        except Exception:
+            return set()
+
+    def cancel_automation_pending_orders(self, symbol: str):
+        """
+        Cancel this bot's pending orders for a symbol when an automation signal becomes inactive.
+
+        - Only cancels orders that look like this bot's scalping pending orders (comment starts with "S")
+          to avoid interfering with manual orders.
+        - Does NOT close existing positions; it only stops new entries.
+        """
+        try:
+            if not self.initialized:
+                return
+            if not self.verify_symbol(symbol):
+                return
+
+            orders = mt5.orders_get(symbol=symbol)
+            if not orders:
+                return
+
+            for order in orders:
+                try:
+                    comment = getattr(order, "comment", "") or ""
+                    if not comment.startswith("S"):
+                        continue
+                    request = {
+                        "action": mt5.TRADE_ACTION_REMOVE,
+                        "order": order.ticket,
+                        "comment": "Automation signal inactive"
+                    }
+                    self.send_order(request)
+                except Exception as e:
+                    logging.error(
+                        f"Error cancelling pending order {getattr(order, 'ticket', '?')} for {symbol}: {str(e)}"
+                    )
+        except Exception as e:
+            logging.error(f"Error cancelling automation pending orders for {symbol}: {str(e)}")
+
     def manage_session_orders(self):
         """Manage orders based on active sessions"""
         try:
+            # Automation stop logic: if a previously-active automation symbol is no longer active,
+            # stop trading it by cancelling this bot's pending orders for that symbol.
+            current_auto_symbols = self._get_current_automation_active_symbols()
+
             # Get active sessions and their pairs
             active_sessions = self.get_active_sessions()
+
+            # Determine which symbols are still "manual" trades in active sessions.
+            manual_symbols = set()
+            for _, session_data in active_sessions:
+                manual_symbols.update(session_data.get('manual_buy_pairs', []))
+                manual_symbols.update(session_data.get('manual_sell_pairs', []))
+
+            symbols_to_stop = (self._last_automation_symbols - current_auto_symbols) - manual_symbols
+            for symbol in sorted(symbols_to_stop):
+                self.cancel_automation_pending_orders(symbol)
+
+            self._last_automation_symbols = set(current_auto_symbols)
+
             if not active_sessions:
                 logging.info("No active sessions found")
                 return

@@ -18,7 +18,7 @@ import threading
 import time
 import logging
 from functools import wraps
-from src.config.config import load_config, TRADING_SESSIONS, TRADING_BOT_CONFIG
+from src.config.config import load_config, TRADING_SESSIONS, TRADING_BOT_CONFIG, PROFIT_SCOUTING_CONFIG
 from src.config.auth_config import auth_config, login_required
 from src.api.api_service import TradingAPIService
 from src.api.enhanced_api_service import enhanced_api_service
@@ -319,6 +319,13 @@ def manual():
     """Serve the trader user manual (responsive help page)."""
     return render_template('manual.html')
 
+
+@app.route('/automation')
+@login_required
+def automation_dashboard():
+    """Serve the GSignalX automation dashboard."""
+    return render_template('automation.html')
+
 def background_monitoring():
     """Enhanced background thread for real-time monitoring"""
     global monitoring_active
@@ -509,7 +516,8 @@ def settings():
     
     # Initialize config manager if needed
     config_manager = get_config_manager()
-    if not config_manager.get('profit_monitor') or not config_manager.get('trading_bot'):
+    if (not config_manager.get('profit_monitor') or not config_manager.get('trading_bot')
+            or not config_manager.get('profit_scouting')):
         initialize_from_static_config(config)
     
     if request.method == 'POST':
@@ -635,16 +643,56 @@ def settings():
                 flash(f'Error updating trading bot settings: {str(e)}', 'danger')
                 logger.error(f"Exception updating trading bot settings: {str(e)}")
         
+        elif settings_type == 'profit_scouting':
+            try:
+                updates = {}
+
+                numeric_fields = {
+                    'target_profit_pair': (0.1, 10000.0, float),
+                    'target_profit_position': (0.1, 10000.0, float),
+                    'total_target_profit': (0.1, 100000.0, float),
+                    'order_deviation': (1, 100, int),
+                    'magic_number': (1, 999999, int),
+                    'check_interval': (1, 3600, int),
+                    'max_retries': (1, 10, int),
+                    'retry_delay': (0.5, 60, float)
+                }
+
+                for field, (min_val, max_val, type_func) in numeric_fields.items():
+                    value = request.form.get(field)
+                    if value is not None and value != '':
+                        try:
+                            value = type_func(value)
+                            if min_val <= value <= max_val:
+                                updates[field] = value
+                            else:
+                                flash(f'Invalid value for {field.replace("_", " ").title()}: must be between {min_val} and {max_val}', 'warning')
+                        except ValueError:
+                            flash(f'Invalid value for {field.replace("_", " ").title()}', 'warning')
+
+                if updates and config_manager.update_profit_scouting_config(updates):
+                    flash('Profit scouting settings updated successfully. Changes apply immediately.', 'success')
+                    logger.info(f"Profit scouting settings updated by user {session['user_id']}: {updates}")
+                    _notify_config_change()
+                else:
+                    flash('No profit scouting settings were changed.', 'info' if not updates else 'danger')
+            except Exception as e:
+                flash(f'Error updating profit scouting settings: {str(e)}', 'danger')
+                logger.error(f"Exception updating profit scouting settings: {str(e)}")
+        
         return redirect(url_for('settings'))
     
     # GET request - render settings page with current config
     profit_config = config_manager.get_profit_monitor_config()
     trading_config = config_manager.get_trading_bot_config()
+    profit_scouting_config = config_manager.get_profit_scouting_config()
     return render_template(
         'settings.html',
         profit_config=profit_config,
         trading_config=trading_config,
-        trading_defaults=TRADING_BOT_CONFIG
+        trading_defaults=TRADING_BOT_CONFIG,
+        profit_scouting_config=profit_scouting_config,
+        profit_scouting_defaults=PROFIT_SCOUTING_CONFIG
     )
 
 def _notify_config_change():
@@ -1418,6 +1466,185 @@ def start_operation_polling(request_id, operation_type):
     
     # Start enhanced polling in background thread
     threading.Thread(target=poll_operation, daemon=True).start()
+
+
+# -----------------------------
+# GSignalX Automation Endpoints
+# -----------------------------
+
+@app.route('/api/automation/status', methods=['GET'])
+@login_required
+def api_automation_status():
+    """Return last known runner status (written by automation runner)."""
+    import json
+    status_file = os.path.join(project_root, 'automation_status.json')
+    try:
+        if os.path.exists(status_file):
+            with open(status_file, 'r', encoding='utf-8') as f:
+                return jsonify(json.load(f))
+        return jsonify({
+            "runner": "GSignalXAutomationRunner",
+            "status": "not_running",
+            "message": "automation_status.json not found (start the runner)",
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/api/automation/rules', methods=['GET'])
+@login_required
+def api_automation_list_rules():
+    """List automation rules for the current user."""
+    from src.automation.storage import AutomationRuleStore, get_db_connection
+    user_id = session.get('user_id', 'admin')
+    try:
+        with get_db_connection() as conn:
+            store = AutomationRuleStore(conn)
+            rules = store.list_rules(user_id)
+            return jsonify({
+                "user_id": user_id,
+                "rules": [
+                    {
+                        "id": r.id,
+                        "name": r.name,
+                        "enabled": r.enabled,
+                        "symbols": r.symbols,
+                        "biases": r.biases,
+                        "market_phases": r.phases,
+                        "timeframes": r.timeframes,
+                        "created_at": r.created_at,
+                        "updated_at": r.updated_at,
+                    }
+                    for r in rules
+                ],
+            })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/automation/rules', methods=['POST'])
+@login_required
+def api_automation_create_rule():
+    """Create an automation rule for the current user."""
+    from src.automation.storage import AutomationRuleStore, get_db_connection
+    user_id = session.get('user_id', 'admin')
+    data = request.get_json(silent=True) or {}
+
+    try:
+        name = str(data.get("name") or "Rule")
+        enabled = bool(data.get("enabled", True))
+        symbols = data.get("symbols") or []
+        biases = data.get("biases") or []
+        market_phases = data.get("market_phases") or []
+        timeframes = data.get("timeframes") or []
+
+        if not isinstance(symbols, list) or not isinstance(biases, list) or not isinstance(market_phases, list) or not isinstance(timeframes, list):
+            return jsonify({"error": "symbols/biases/market_phases/timeframes must be lists"}), 400
+
+        with get_db_connection() as conn:
+            store = AutomationRuleStore(conn)
+            rule_id = store.create_rule(
+                user_id=user_id,
+                name=name,
+                enabled=enabled,
+                symbols=symbols,
+                biases=biases,
+                phases=market_phases,
+                timeframes=timeframes,
+            )
+            return jsonify({"status": "success", "id": rule_id}), 201
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/api/automation/rules/<int:rule_id>', methods=['PUT'])
+@login_required
+def api_automation_update_rule(rule_id: int):
+    """Update an automation rule (current user only)."""
+    from src.automation.storage import AutomationRuleStore, get_db_connection
+    user_id = session.get('user_id', 'admin')
+    data = request.get_json(silent=True) or {}
+
+    try:
+        with get_db_connection() as conn:
+            store = AutomationRuleStore(conn)
+            ok = store.update_rule(
+                rule_id=rule_id,
+                user_id=user_id,
+                name=data.get("name"),
+                enabled=data.get("enabled"),
+                symbols=data.get("symbols"),
+                biases=data.get("biases"),
+                phases=data.get("market_phases"),
+                timeframes=data.get("timeframes"),
+            )
+            if not ok:
+                return jsonify({"status": "error", "error": "Rule not found"}), 404
+            return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/api/automation/rules/<int:rule_id>', methods=['DELETE'])
+@login_required
+def api_automation_delete_rule(rule_id: int):
+    """Delete an automation rule (current user only)."""
+    from src.automation.storage import AutomationRuleStore, get_db_connection
+    user_id = session.get('user_id', 'admin')
+    try:
+        with get_db_connection() as conn:
+            store = AutomationRuleStore(conn)
+            ok = store.delete_rule(rule_id, user_id=user_id)
+            if not ok:
+                return jsonify({"status": "error", "error": "Rule not found"}), 404
+            return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/api/automation/active_pairs', methods=['GET'])
+@login_required
+def api_automation_active_pairs():
+    """List currently active pairs (resolved, TTL-based)."""
+    from src.automation.storage import AutomationStateStore, get_db_connection
+    try:
+        with get_db_connection() as conn:
+            state = AutomationStateStore(conn)
+            return jsonify({"active_pairs": state.list_active_pairs()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/automation/matches', methods=['GET'])
+@login_required
+def api_automation_matches():
+    """List rule matches (for UI transparency)."""
+    from src.automation.storage import AutomationStateStore, get_db_connection
+    user_id = session.get('user_id', 'admin')
+    try:
+        with get_db_connection() as conn:
+            state = AutomationStateStore(conn)
+            return jsonify({"matches": state.list_rule_matches(user_id)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/automation/signals', methods=['GET'])
+@login_required
+def api_automation_signals():
+    """List last stored signal snapshots (written by runner)."""
+    from src.automation.storage import AutomationStateStore, get_db_connection
+    try:
+        limit = int(request.args.get("limit", "200"))
+    except Exception:
+        limit = 200
+
+    try:
+        with get_db_connection() as conn:
+            state = AutomationStateStore(conn)
+            return jsonify({"signals": state.list_signal_snapshots(limit=max(1, min(1000, limit)))})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @socketio.on('get_profit_history')
 def handle_get_profit_history(data):

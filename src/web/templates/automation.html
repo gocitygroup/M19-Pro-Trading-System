@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automation - G-SignalX M19 Trading System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-0"><i class="fas fa-bolt"></i> Automation Dashboard</h2>
+                <div class="text-muted small">Configure rule-based auto-trading powered by GSignalX signals</div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary" id="themeToggleAutomation">
+                    <i class="fas fa-moon"></i> Dark Mode
+                </button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="text-muted small">Last API Fetch</div>
+                                <div class="h6 mb-0" id="autoLastFetch">—</div>
+                            </div>
+                            <div class="text-primary"><i class="fas fa-cloud-download-alt fa-lg"></i></div>
+                        </div>
+                        <div class="mt-2 text-muted small" id="autoFetchMeta">—</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="text-muted small">Last Successful Cycle</div>
+                                <div class="h6 mb-0" id="autoLastSuccess">—</div>
+                            </div>
+                            <div class="text-success"><i class="fas fa-check-circle fa-lg"></i></div>
+                        </div>
+                        <div class="mt-2 text-muted small">Active pairs: <span id="autoActiveCount">0</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="text-muted small">Error / Retries</div>
+                                <div class="h6 mb-0" id="autoLastError">—</div>
+                            </div>
+                            <div class="text-danger"><i class="fas fa-triangle-exclamation fa-lg"></i></div>
+                        </div>
+                        <div class="mt-2 text-muted small">If this shows “not running”, start the runner.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-5">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-sliders"></i> Rule Builder</div>
+                            <div class="small text-muted" id="editingBadge" style="display:none;">Editing rule</div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="autoAlert" class="alert alert-info d-none"></div>
+
+                        <form id="ruleForm">
+                            <input type="hidden" id="ruleId" value="">
+
+                            <div class="mb-3">
+                                <label class="form-label">Rule Name</label>
+                                <input class="form-control" id="ruleName" placeholder="e.g. D1 + H4 aligned (EURUSD)">
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="ruleEnabled" checked>
+                                    <label class="form-check-label" for="ruleEnabled">Enabled</label>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <label class="form-label mb-0">Assets (symbols)</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="allSymbols" checked>
+                                        <label class="form-check-label small" for="allSymbols">All</label>
+                                    </div>
+                                </div>
+                                <select multiple class="form-select" id="ruleSymbols" size="8" disabled></select>
+                                <div class="form-text">Uncheck “All” to select one or more symbols.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Bias</label>
+                                <div class="d-flex gap-3 flex-wrap">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="biasBullish" checked>
+                                        <label class="form-check-label" for="biasBullish">BULLISH</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="biasBearish" checked>
+                                        <label class="form-check-label" for="biasBearish">BEARISH</label>
+                                    </div>
+                                </div>
+                                <div class="form-text">NEUTRAL/PENDING signals are ignored as no-trade.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Market Phase</label>
+                                <div class="d-flex gap-3 flex-wrap">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="phaseRange" checked>
+                                        <label class="form-check-label" for="phaseRange">RANGE</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="phaseExpansion" checked>
+                                        <label class="form-check-label" for="phaseExpansion">EXPANSION</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="phaseMixed" checked>
+                                        <label class="form-check-label" for="phaseMixed">MIXED</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Timeframe Alignment (required)</label>
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input tfCheck" type="checkbox" value="D1" id="tfD1" checked>
+                                            <label class="form-check-label" for="tfD1">D1</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input tfCheck" type="checkbox" value="H4" id="tfH4">
+                                            <label class="form-check-label" for="tfH4">H4</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input tfCheck" type="checkbox" value="H1" id="tfH1">
+                                            <label class="form-check-label" for="tfH1">H1</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input tfCheck" type="checkbox" value="M30" id="tfM30">
+                                            <label class="form-check-label" for="tfM30">M30</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input tfCheck" type="checkbox" value="M15" id="tfM15">
+                                            <label class="form-check-label" for="tfM15">M15</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input tfCheck" type="checkbox" value="M5" id="tfM5">
+                                            <label class="form-check-label" for="tfM5">M5</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-text">Checked timeframes must align with BUY (bullish) / SELL (bearish) and must not be NEUTRAL.</div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary" id="saveRuleBtn">
+                                    <i class="fas fa-save"></i> Save Rule
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="cancelEditBtn" style="display:none;">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card mb-3">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-list"></i> Your Rules</div>
+                        <button class="btn btn-sm btn-outline-light" id="refreshRulesBtn"><i class="fas fa-sync"></i> Refresh</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Enabled</th>
+                                        <th>Symbols</th>
+                                        <th>Bias</th>
+                                        <th>Phase</th>
+                                        <th>TF</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rulesTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-signal"></i> Active Pairs</div>
+                        <button class="btn btn-sm btn-outline-light" id="refreshActiveBtn"><i class="fas fa-sync"></i> Refresh</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Symbol</th>
+                                        <th>Direction</th>
+                                        <th>Phase</th>
+                                        <th>TF</th>
+                                        <th>Confidence</th>
+                                        <th>Expires</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="activePairsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-magnifying-glass-chart"></i> Matching Rules (debug)</div>
+                        <button class="btn btn-sm btn-outline-light" id="refreshMatchesBtn"><i class="fas fa-sync"></i> Refresh</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Rule</th>
+                                        <th>Symbol</th>
+                                        <th>Direction</th>
+                                        <th>Matched</th>
+                                        <th>Expires</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="matchesBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="text-muted small">Tip: use this table to validate why signals are (or aren’t) being activated.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/automation.js') }}"></script>
+</body>
+</html>
+

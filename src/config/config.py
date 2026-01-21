@@ -85,6 +85,18 @@ PROFIT_MONITOR_CONFIG = {
     'log_level': 'INFO'
 }
 
+# Profit Scouting Bot Parameters
+PROFIT_SCOUTING_CONFIG = {
+    'target_profit_pair': 10.0,
+    'target_profit_position': 5.0,
+    'total_target_profit': 20.0,
+    'order_deviation': 20,
+    'magic_number': 10001,
+    'check_interval': 5,
+    'max_retries': 3,
+    'retry_delay': 1
+}
+
 # MT5 Configuration
 MT5_CONFIG = {
     'server': os.getenv('MT5_SERVER', ''),
@@ -186,6 +198,7 @@ def load_config() -> Dict[str, Any]:
         'timezone': TIMEZONE_CONFIG,
         'trading_bot': TRADING_BOT_CONFIG,
         'profit_monitor': PROFIT_MONITOR_CONFIG.copy(),  # Copy to avoid mutation
+        'profit_scouting': PROFIT_SCOUTING_CONFIG.copy(),
         'mt5': MT5_CONFIG,
         'logging': LOGGING_CONFIG,
         'sessions': TRADING_SESSIONS
@@ -200,7 +213,7 @@ def load_config() -> Dict[str, Any]:
     config['sessions'] = get_session_times(detected_tz)
     
     # Load from environment variables if they exist
-    for section in ['trading_bot', 'profit_monitor']:
+    for section in ['trading_bot', 'profit_monitor', 'profit_scouting']:
         for key in config[section]:
             env_key = f'{section.upper()}_{key.upper()}'
             if os.getenv(env_key):
@@ -212,6 +225,7 @@ def load_config() -> Dict[str, Any]:
         config_manager = get_config_manager()
         runtime_profit_config = config_manager.get_profit_monitor_config()
         runtime_trading_config = config_manager.get_trading_bot_config()
+        runtime_profit_scouting_config = config_manager.get_profit_scouting_config()
         
         # Override with runtime config if available
         if runtime_profit_config and '_metadata' not in runtime_profit_config:
@@ -222,6 +236,10 @@ def load_config() -> Dict[str, Any]:
         if runtime_trading_config and '_metadata' not in runtime_trading_config:
             if runtime_trading_config:
                 config['trading_bot'].update(runtime_trading_config)
+        
+        if runtime_profit_scouting_config and '_metadata' not in runtime_profit_scouting_config:
+            if runtime_profit_scouting_config:
+                config['profit_scouting'].update(runtime_profit_scouting_config)
     except Exception:
         # Config manager not available yet, use static config
         pass

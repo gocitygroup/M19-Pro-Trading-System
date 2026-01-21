@@ -586,3 +586,62 @@ The embeds automatically adapt to their container size:
 - Minimal view: `http://localhost:44444/embed/minimal`
 - Chart view: `http://localhost:44444/embed/chart`
 - Positions view: `http://localhost:44444/embed/positions`
+
+---
+
+## GSignalX Automation (Auto-Trading Runner + Dashboard)
+
+This project includes an **integrated auto-trading automation layer** that:
+- Continuously fetches GSignalX signals (API polling or file demo mode)
+- Evaluates user-defined automation rules (bias + market_phase + timeframe alignment)
+- Publishes **active pairs** into the existing SQLite database for `MarketSessionTradingBot` to consume (additively)
+- Exposes a web dashboard to create/update/delete rules and view matches/status
+
+### Components (run as separate processes)
+- **Automation runner**: `python src/scripts/run_gsignalx_automation_runner.py`
+- **Web UI**: `python src/web/app.py`
+- **Trading bot**: `python src/scripts/MarketSessionTradingBot.py`
+
+### One-time DB migration (adds automation tables)
+
+Run:
+
+```bash
+python database/migrate_add_automation_tables.py
+```
+
+### Start the automation runner
+
+#### Option A: Demo mode (uses `all_signals.json`)
+
+```bash
+python src/scripts/run_gsignalx_automation_runner.py --source file --file-path all_signals.json --poll-seconds 10 --active-ttl-seconds 30
+```
+
+#### Option B: Live API mode (requires environment variables)
+
+Set:
+- `GSIGNALX_SIGNALS_URL`: full signals endpoint URL
+- `GSIGNALX_API_KEY`: bearer token (if required)
+
+Then run:
+
+```bash
+python src/scripts/run_gsignalx_automation_runner.py --source api --poll-seconds 10 --active-ttl-seconds 30
+```
+
+### Open the automation dashboard
+
+1. Start the web server:
+
+```bash
+python src/web/app.py
+```
+
+2. Login, then open **Automation** from the user menu (top-right).
+
+### How it integrates with `MarketSessionTradingBot`
+
+The bot now **optionally** reads automation-published active pairs from the DB table `automation_active_pairs`.
+- If the table is missing or empty, the bot behaves exactly as before.
+- If the runner is active and a rule matches, the symbol will appear as an active BUY/SELL pair and be traded by the bot during active sessions.

@@ -3,58 +3,58 @@
         "min_profit_percent": 0.5,
         "_metadata": {
             "min_profit_percent": {
-                "updated_at": "2025-12-12T16:51:32.044230",
+                "updated_at": "2026-01-21T16:59:22.504273",
                 "old_value": 0.5,
                 "new_value": 0.5
             },
             "trailing_stop_percent": {
-                "updated_at": "2025-12-12T16:51:32.046772",
-                "old_value": 0.2,
+                "updated_at": "2026-01-21T16:59:22.536181",
+                "old_value": 0.7,
                 "new_value": 0.7
             },
             "check_interval": {
-                "updated_at": "2025-12-12T16:51:32.048382",
+                "updated_at": "2026-01-21T16:59:22.538210",
                 "old_value": 1800,
-                "new_value": 1800
+                "new_value": 60
             },
             "partial_close_enabled": {
-                "updated_at": "2025-12-12T16:51:32.056335",
+                "updated_at": "2026-01-21T16:59:22.550918",
                 "old_value": true,
                 "new_value": true
             },
             "partial_close_threshold": {
-                "updated_at": "2025-12-12T16:51:32.049822",
+                "updated_at": "2026-01-21T16:59:22.540805",
                 "old_value": 1.0,
                 "new_value": 1.0
             },
             "partial_close_percent": {
-                "updated_at": "2025-12-12T16:51:32.051442",
+                "updated_at": "2026-01-21T16:59:22.544738",
                 "old_value": 50,
                 "new_value": 50
             },
             "max_retries": {
-                "updated_at": "2025-12-12T16:51:32.053117",
+                "updated_at": "2026-01-21T16:59:22.546807",
                 "old_value": 3,
                 "new_value": 3
             },
             "retry_delay": {
-                "updated_at": "2025-12-12T16:51:32.054724",
-                "old_value": 1,
+                "updated_at": "2026-01-21T16:59:22.548892",
+                "old_value": 1.0,
                 "new_value": 1.0
             },
             "enable_market_check": {
-                "updated_at": "2025-12-12T16:51:32.057923",
+                "updated_at": "2026-01-21T16:59:22.552526",
                 "old_value": true,
                 "new_value": true
             },
             "log_level": {
-                "updated_at": "2025-12-12T16:51:32.059535",
+                "updated_at": "2026-01-21T16:59:22.553992",
                 "old_value": "INFO",
                 "new_value": "INFO"
             }
         },
         "trailing_stop_percent": 0.7,
-        "check_interval": 1800,
+        "check_interval": 60,
         "partial_close_enabled": true,
         "partial_close_threshold": 1.0,
         "partial_close_percent": 50,
@@ -108,5 +108,57 @@
         "min_spread_multiplier": 1.0,
         "order_expiry_minutes": 30,
         "session_check_interval": 60
+    },
+    "profit_scouting": {
+        "target_profit_pair": 10.0,
+        "_metadata": {
+            "target_profit_pair": {
+                "updated_at": "2026-01-21T18:01:07.440567",
+                "old_value": null,
+                "new_value": 10.0
+            },
+            "target_profit_position": {
+                "updated_at": "2026-01-21T18:01:07.441946",
+                "old_value": null,
+                "new_value": 5.0
+            },
+            "total_target_profit": {
+                "updated_at": "2026-01-21T18:01:07.443831",
+                "old_value": null,
+                "new_value": 20.0
+            },
+            "order_deviation": {
+                "updated_at": "2026-01-21T18:01:07.445132",
+                "old_value": null,
+                "new_value": 20
+            },
+            "magic_number": {
+                "updated_at": "2026-01-21T18:01:07.446293",
+                "old_value": null,
+                "new_value": 10001
+            },
+            "check_interval": {
+                "updated_at": "2026-01-21T18:01:07.447675",
+                "old_value": null,
+                "new_value": 5
+            },
+            "max_retries": {
+                "updated_at": "2026-01-21T18:01:07.448804",
+                "old_value": null,
+                "new_value": 3
+            },
+            "retry_delay": {
+                "updated_at": "2026-01-21T18:01:07.450026",
+                "old_value": null,
+                "new_value": 1
+            }
+        },
+        "target_profit_position": 5.0,
+        "total_target_profit": 20.0,
+        "order_deviation": 20,
+        "magic_number": 10001,
+        "check_interval": 5,
+        "max_retries": 3,
+        "retry_delay": 1
     }
 }

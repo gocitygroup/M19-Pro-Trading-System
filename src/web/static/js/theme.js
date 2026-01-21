@@ -98,7 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const possibleButtonIds = [
         'themeToggle',
         'themeToggleSettings',
-        'themeToggleManual'
+        'themeToggleManual',
+        'themeToggleAutomation'
     ];
 
     // Initialize with the first found button

@@ -7,19 +7,28 @@ import sys
 import os
 import time
 import json
+import argparse
 
 # Add project root to Python path
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 
 from src.config import get_config_manager, initialize_from_static_config
-from src.config.config import load_config, PROFIT_MONITOR_CONFIG
+from src.config.config import load_config, PROFIT_MONITOR_CONFIG, PROFIT_SCOUTING_CONFIG
 
 def print_section(title):
     """Print a formatted section header"""
     print("\n" + "=" * 60)
     print(f"  {title}")
     print("=" * 60)
+
+def _create_config_change_signal():
+    """Create config change signal file for monitors."""
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    signal_file = os.path.join(project_root, 'config', 'config_changed.signal')
+    with open(signal_file, 'w') as f:
+        f.write(time.strftime('%Y-%m-%d %H:%M:%S'))
+    return signal_file
 
 def test_config_manager_initialization():
     """Test configuration manager initialization"""
@@ -75,6 +84,48 @@ def test_config_update():
         else:
             print("✗ Failed to update configuration")
             return False
+            
+    except Exception as e:
+        print(f"✗ Error: {str(e)}")
+        return False
+
+def test_profit_scouting_update():
+    """Test profit scouting configuration updates"""
+    print_section("Test 2B: Profit Scouting Configuration Updates")
+    
+    try:
+        config_manager = get_config_manager()
+        original_config = config_manager.get_profit_scouting_config().copy()
+        
+        updates = {
+            'target_profit_position': 6.0,
+            'target_profit_pair': 12.0,
+            'total_target_profit': 24.0,
+            'check_interval': 7,
+            'max_retries': 4,
+            'retry_delay': 2
+        }
+        
+        success = config_manager.update_profit_scouting_config(updates)
+        
+        if success:
+            updated_config = config_manager.get_profit_scouting_config()
+            mismatches = [
+                key for key, value in updates.items()
+                if updated_config.get(key) != value
+            ]
+            
+            if mismatches:
+                print(f"✗ Mismatched updates: {mismatches}")
+                return False
+            
+            _create_config_change_signal()
+            config_manager.set_section('profit_scouting', original_config)
+            print("✓ Profit scouting settings updated and restored successfully")
+            return True
+        
+        print("✗ Failed to update profit scouting settings")
+        return False
             
     except Exception as e:
         print(f"✗ Error: {str(e)}")
@@ -284,6 +335,57 @@ def display_current_config():
     except Exception as e:
         print(f"Error displaying config: {str(e)}")
 
+def display_current_profit_scouting_config():
+    """Display current profit scouting configuration"""
+    print_section("Current Profit Scouting Configuration")
+    
+    try:
+        config_manager = get_config_manager()
+        scouting_config = config_manager.get_profit_scouting_config()
+        
+        for key, value in scouting_config.items():
+            if key == '_metadata':
+                continue
+            print(f"  {key:30s}: {value}")
+        
+    except Exception as e:
+        print(f"Error displaying profit scouting config: {str(e)}")
+
+def interactive_profit_scouting_test():
+    """Interactive test for profit scouting settings"""
+    print_section("Interactive Profit Scouting Settings Test")
+    config_manager = get_config_manager()
+    current = config_manager.get_profit_scouting_config()
+    
+    print("Press Enter to keep current values.")
+    
+    def _prompt_float(label, current_value):
+        value = input(f"{label} [{current_value}]: ").strip()
+        return current_value if value == "" else float(value)
+    
+    def _prompt_int(label, current_value):
+        value = input(f"{label} [{current_value}]: ").strip()
+        return current_value if value == "" else int(value)
+    
+    updates = {
+        'target_profit_position': _prompt_float("Target profit (position)", current.get('target_profit_position', 5.0)),
+        'target_profit_pair': _prompt_float("Target profit (pair)", current.get('target_profit_pair', 10.0)),
+        'total_target_profit': _prompt_float("Target profit (total)", current.get('total_target_profit', 20.0)),
+        'order_deviation': _prompt_int("Order deviation", current.get('order_deviation', 20)),
+        'magic_number': _prompt_int("Magic number", current.get('magic_number', 10001)),
+        'check_interval': _prompt_int("Check interval (sec)", current.get('check_interval', 5)),
+        'max_retries': _prompt_int("Max retries", current.get('max_retries', 3)),
+        'retry_delay': _prompt_float("Retry delay (sec)", current.get('retry_delay', 1))
+    }
+    
+    confirm = input("Apply these updates? [y/N]: ").strip().lower()
+    if confirm == 'y':
+        config_manager.update_profit_scouting_config(updates)
+        _create_config_change_signal()
+        print("✓ Updates applied. Signal file created.")
+    else:
+        print("No changes applied.")
+
 def main():
     """Run all tests"""
     print("\n" + "=" * 60)
@@ -292,9 +394,14 @@ def main():
     print("\nThis script tests the dynamic configuration management system")
     print("for the profit monitor.\n")
     
+    parser = argparse.ArgumentParser(description="Run configuration tests")
+    parser.add_argument("--interactive-profit-scouting", action="store_true", help="Run interactive profit scouting test")
+    args = parser.parse_args()
+    
     tests = [
         ("Initialization", test_config_manager_initialization),
         ("Single Update", test_config_update),
+        ("Profit Scouting Update", test_profit_scouting_update),
         ("Bulk Update", test_bulk_update),
         ("Persistence", test_persistence),
         ("Signaling", test_signal_file_creation),
@@ -314,6 +421,10 @@ def main():
     
     # Display current configuration
     display_current_config()
+    display_current_profit_scouting_config()
+    
+    if args.interactive_profit_scouting:
+        interactive_profit_scouting_test()
     
     # Summary
     print_section("Test Summary")
