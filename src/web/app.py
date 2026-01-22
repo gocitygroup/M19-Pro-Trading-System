@@ -647,6 +647,10 @@ def settings():
             try:
                 updates = {}
 
+                profit_targets_mode = request.form.get('profit_targets_mode', 'all')
+                if profit_targets_mode in ['all', 'by_category']:
+                    updates['profit_targets_mode'] = profit_targets_mode
+
                 numeric_fields = {
                     'target_profit_pair': (0.1, 10000.0, float),
                     'target_profit_position': (0.1, 10000.0, float),
@@ -657,8 +661,16 @@ def settings():
                     'max_retries': (1, 10, int),
                     'retry_delay': (0.5, 60, float)
                 }
+                category_fields = {}
+                for category in ['currency', 'commodity', 'crypto']:
+                    for field, (min_val, max_val, type_func) in {
+                        'target_profit_pair': (0.1, 10000.0, float),
+                        'target_profit_position': (0.1, 10000.0, float),
+                        'total_target_profit': (0.1, 100000.0, float)
+                    }.items():
+                        category_fields[f"{field}_{category}"] = (min_val, max_val, type_func)
 
-                for field, (min_val, max_val, type_func) in numeric_fields.items():
+                for field, (min_val, max_val, type_func) in {**numeric_fields, **category_fields}.items():
                     value = request.form.get(field)
                     if value is not None and value != '':
                         try:

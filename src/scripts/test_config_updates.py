@@ -98,9 +98,19 @@ def test_profit_scouting_update():
         original_config = config_manager.get_profit_scouting_config().copy()
         
         updates = {
+            'profit_targets_mode': 'by_category',
             'target_profit_position': 6.0,
             'target_profit_pair': 12.0,
             'total_target_profit': 24.0,
+            'target_profit_position_currency': 6.0,
+            'target_profit_pair_currency': 12.0,
+            'total_target_profit_currency': 24.0,
+            'target_profit_position_commodity': 8.0,
+            'target_profit_pair_commodity': 16.0,
+            'total_target_profit_commodity': 32.0,
+            'target_profit_position_crypto': 10.0,
+            'target_profit_pair_crypto': 20.0,
+            'total_target_profit_crypto': 40.0,
             'check_interval': 7,
             'max_retries': 4,
             'retry_delay': 2
@@ -343,10 +353,28 @@ def display_current_profit_scouting_config():
         config_manager = get_config_manager()
         scouting_config = config_manager.get_profit_scouting_config()
         
-        for key, value in scouting_config.items():
-            if key == '_metadata':
-                continue
-            print(f"  {key:30s}: {value}")
+        categories = ['currency', 'commodity', 'crypto']
+        base_keys = [
+            'profit_targets_mode',
+            'target_profit_position',
+            'target_profit_pair',
+            'total_target_profit',
+            'order_deviation',
+            'magic_number',
+            'check_interval',
+            'max_retries',
+            'retry_delay'
+        ]
+        print("\nBase Settings:")
+        for key in base_keys:
+            if key in scouting_config:
+                print(f"  {key:30s}: {scouting_config.get(key)}")
+
+        for category in categories:
+            print(f"\n{category.title()} Targets:")
+            for field in ['target_profit_position', 'target_profit_pair', 'total_target_profit']:
+                key = f"{field}_{category}"
+                print(f"  {key:30s}: {scouting_config.get(key, 'N/A')}")
         
     except Exception as e:
         print(f"Error displaying profit scouting config: {str(e)}")
@@ -367,10 +395,23 @@ def interactive_profit_scouting_test():
         value = input(f"{label} [{current_value}]: ").strip()
         return current_value if value == "" else int(value)
     
+    mode_input = input(f"Profit targets mode (all/by_category) [{current.get('profit_targets_mode', 'all')}]: ").strip()
+    profit_targets_mode = mode_input if mode_input in ('all', 'by_category') else current.get('profit_targets_mode', 'all')
+
     updates = {
+        'profit_targets_mode': profit_targets_mode,
         'target_profit_position': _prompt_float("Target profit (position)", current.get('target_profit_position', 5.0)),
         'target_profit_pair': _prompt_float("Target profit (pair)", current.get('target_profit_pair', 10.0)),
         'total_target_profit': _prompt_float("Target profit (total)", current.get('total_target_profit', 20.0)),
+        'target_profit_position_currency': _prompt_float("Currency target (position)", current.get('target_profit_position_currency', 5.0)),
+        'target_profit_pair_currency': _prompt_float("Currency target (pair)", current.get('target_profit_pair_currency', 10.0)),
+        'total_target_profit_currency': _prompt_float("Currency target (total)", current.get('total_target_profit_currency', 20.0)),
+        'target_profit_position_commodity': _prompt_float("Commodity target (position)", current.get('target_profit_position_commodity', 7.5)),
+        'target_profit_pair_commodity': _prompt_float("Commodity target (pair)", current.get('target_profit_pair_commodity', 15.0)),
+        'total_target_profit_commodity': _prompt_float("Commodity target (total)", current.get('total_target_profit_commodity', 30.0)),
+        'target_profit_position_crypto': _prompt_float("Crypto target (position)", current.get('target_profit_position_crypto', 10.0)),
+        'target_profit_pair_crypto': _prompt_float("Crypto target (pair)", current.get('target_profit_pair_crypto', 20.0)),
+        'total_target_profit_crypto': _prompt_float("Crypto target (total)", current.get('total_target_profit_crypto', 40.0)),
         'order_deviation': _prompt_int("Order deviation", current.get('order_deviation', 20)),
         'magic_number': _prompt_int("Magic number", current.get('magic_number', 10001)),
         'check_interval': _prompt_int("Check interval (sec)", current.get('check_interval', 5)),

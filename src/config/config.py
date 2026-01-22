@@ -87,9 +87,19 @@ PROFIT_MONITOR_CONFIG = {
 
 # Profit Scouting Bot Parameters
 PROFIT_SCOUTING_CONFIG = {
+    'profit_targets_mode': 'all',
     'target_profit_pair': 10.0,
     'target_profit_position': 5.0,
     'total_target_profit': 20.0,
+    'target_profit_pair_currency': 10.0,
+    'target_profit_position_currency': 5.0,
+    'total_target_profit_currency': 20.0,
+    'target_profit_pair_commodity': 15.0,
+    'target_profit_position_commodity': 7.5,
+    'total_target_profit_commodity': 30.0,
+    'target_profit_pair_crypto': 20.0,
+    'target_profit_position_crypto': 10.0,
+    'total_target_profit_crypto': 40.0,
     'order_deviation': 20,
     'magic_number': 10001,
     'check_interval': 5,

@@ -34,6 +34,8 @@ class DisplaySymbols:
     PROFIT_UNCHANGED = '-'
 
 logger = logging.getLogger(__name__)
+TARGET_FIELDS = ('target_profit_pair', 'target_profit_position', 'total_target_profit')
+CATEGORY_NAMES = ('currency', 'commodity', 'crypto')
 
 class OrderTimeType(Enum):
     GTC = mt5.ORDER_TIME_GTC
@@ -80,12 +82,15 @@ class TradingConfig:
         self.target_profit_pair = self.profit_scouting_config['target_profit_pair']
         self.target_profit_position = self.profit_scouting_config['target_profit_position']
         self.total_target_profit = self.profit_scouting_config['total_target_profit']
+        self.profit_targets_mode = self.profit_scouting_config.get('profit_targets_mode', 'all')
         self.order_deviation = self.profit_scouting_config['order_deviation']
         self.magic_number = self.profit_scouting_config['magic_number']
         self.check_interval = self.profit_scouting_config['check_interval']
         self.max_retries = self.profit_scouting_config['max_retries']
         self.retry_delay = self.profit_scouting_config['retry_delay']
+        self.category_targets = self._load_category_targets(self.profit_scouting_config)
         self._config_fields = {
+            'profit_targets_mode': 'profit_targets_mode',
             'target_profit_pair': 'target_profit_pair',
             'target_profit_position': 'target_profit_position',
             'total_target_profit': 'total_target_profit',
@@ -118,6 +123,29 @@ class TradingConfig:
             )
         )
 
+    def _load_category_targets(self, config: Dict[str, Any]) -> Dict[str, Dict[str, float]]:
+        targets = {}
+        for category in CATEGORY_NAMES:
+            targets[category] = {
+                'target_profit_pair': config.get(f"target_profit_pair_{category}", self.target_profit_pair),
+                'target_profit_position': config.get(f"target_profit_position_{category}", self.target_profit_position),
+                'total_target_profit': config.get(f"total_target_profit_{category}", self.total_target_profit)
+            }
+        return targets
+
+    def get_targets_for_category(self, category: str) -> Dict[str, float]:
+        if self.profit_targets_mode == 'by_category':
+            return self.category_targets.get(category, {
+                'target_profit_pair': self.target_profit_pair,
+                'target_profit_position': self.target_profit_position,
+                'total_target_profit': self.total_target_profit
+            })
+        return {
+            'target_profit_pair': self.target_profit_pair,
+            'target_profit_position': self.target_profit_position,
+            'total_target_profit': self.total_target_profit
+        }
+
     def apply_runtime_updates(self, updates: Dict[str, Any]) -> List[str]:
         """Apply runtime config updates and return updated keys."""
         if not updates:
@@ -131,6 +159,19 @@ class TradingConfig:
                 if updated_value != current_value:
                     setattr(self, attr, updated_value)
                     updated_keys.append(key)
+
+        category_updates = {}
+        for category in CATEGORY_NAMES:
+            for field in TARGET_FIELDS:
+                key = f"{field}_{category}"
+                if key in updates and updates[key] is not None:
+                    category_updates.setdefault(category, {})[field] = float(updates[key])
+                    updated_keys.append(key)
+
+        if category_updates:
+            for category, fields in category_updates.items():
+                self.category_targets.setdefault(category, {})
+                self.category_targets[category].update(fields)
 
         return updated_keys
 
@@ -267,6 +308,36 @@ class ProfitMonitor:
         self.config_signal_file = os.path.join(project_root, 'config', 'config_changed.signal')
         self.last_config_check = 0
         self.config_check_interval = 3
+        self._symbol_category_cache: Dict[str, str] = {}
+
+    def _get_symbol_category(self, symbol: str) -> str:
+        cached = self._symbol_category_cache.get(symbol)
+        if cached:
+            return cached
+
+        symbol_upper = symbol.upper()
+        category = 'currency'
+        info = mt5.symbol_info(symbol)
+        path = info.path.lower() if info and getattr(info, 'path', None) else ''
+
+        if 'crypto' in path:
+            category = 'crypto'
+        elif any(key in path for key in ('metal', 'metals', 'commodity', 'energy', 'oil', 'gas')):
+            category = 'commodity'
+        elif 'forex' in path or 'fx' in path or 'major' in path or 'minor' in path:
+            category = 'currency'
+        elif symbol_upper.startswith(('BTC', 'ETH', 'XRP', 'LTC', 'ADA', 'SOL', 'BNB', 'DOGE', 'AVAX', 'DOT', 'LINK', 'XMR', 'ETC', 'SHIB')):
+            category = 'crypto'
+        elif symbol_upper.startswith(('XAU', 'XAG', 'XPT', 'XPD')) or symbol_upper in {'WTI', 'BRENT', 'OIL', 'NG', 'USOIL', 'UKOIL'}:
+            category = 'commodity'
+        elif len(symbol_upper) == 6 and symbol_upper.isalpha():
+            category = 'currency'
+
+        self._symbol_category_cache[symbol] = category
+        return category
+
+    def _get_target_set(self, category: str) -> Dict[str, float]:
+        return self.config.get_targets_for_category(category)
 
     def reload_config_if_changed(self) -> bool:
         """Reload profit scouting config when the dashboard signals changes."""
@@ -357,6 +428,8 @@ class ProfitMonitor:
         # Reset profit tracking
         self.pair_profits.clear()
         current_pair_profits = defaultdict(float)
+        category_profits = defaultdict(float)
+        symbol_categories: Dict[str, str] = {}
         positions_to_close = set()  # Track positions that should be closed
         
         # First pass: Calculate all profits and identify positions to close
@@ -370,6 +443,9 @@ class ProfitMonitor:
                 self.pair_profits[symbol] = []
             self.pair_profits[symbol].append((ticket, profit))
             current_pair_profits[symbol] += profit
+            if symbol not in symbol_categories:
+                symbol_categories[symbol] = self._get_symbol_category(symbol)
+            category_profits[symbol_categories[symbol]] += profit
             
         # Calculate total profit
         self.total_profit = sum(profit for symbol_profit in current_pair_profits.values() for profit in [symbol_profit])
@@ -379,26 +455,47 @@ class ProfitMonitor:
             symbol = pos.symbol
             profit = pos.profit
             ticket = pos.ticket
+            category = symbol_categories.get(symbol, 'currency')
+            targets = self._get_target_set(category)
             
             # Check individual position profit target
-            if profit >= self.config.target_profit_position:
+            if profit >= targets['target_profit_position']:
                 positions_to_close.add(ticket)
-                logger.info(f"Position {ticket} marked for closing: individual profit target met ({profit} >= {self.config.target_profit_position})")
+                logger.info(
+                    "Position %s marked for closing (%s): individual profit target met (%.2f >= %.2f)",
+                    ticket,
+                    category,
+                    profit,
+                    targets['target_profit_position']
+                )
             
             # Check pair profit target
             pair_profit = current_pair_profits[symbol]
-            if pair_profit >= self.config.target_profit_pair:
+            if pair_profit >= targets['target_profit_pair']:
                 # Mark all positions of this pair for closing
                 for pair_ticket, _ in self.pair_profits[symbol]:
                     positions_to_close.add(pair_ticket)
-                    logger.info(f"Position {pair_ticket} marked for closing: pair profit target met ({pair_profit} >= {self.config.target_profit_pair})")
+                    logger.info(
+                        "Position %s marked for closing (%s): pair profit target met (%.2f >= %.2f)",
+                        pair_ticket,
+                        category,
+                        pair_profit,
+                        targets['target_profit_pair']
+                    )
             
             # Check total profit target
-            if self.total_profit >= self.config.total_target_profit:
+            total_profit_check = self.total_profit if self.config.profit_targets_mode != 'by_category' else category_profits[category]
+            if total_profit_check >= targets['total_target_profit']:
                 # Mark all positions for closing when they're profitable
                 if profit > 0:
                     positions_to_close.add(ticket)
-                    logger.info(f"Position {ticket} marked for closing: total profit target met ({self.total_profit} >= {self.config.total_target_profit})")
+                    logger.info(
+                        "Position %s marked for closing (%s): total profit target met (%.2f >= %.2f)",
+                        ticket,
+                        category,
+                        total_profit_check,
+                        targets['total_target_profit']
+                    )
         
         # Close all marked positions
         for ticket in positions_to_close:
@@ -486,9 +583,19 @@ class ProfitScoutingService:
         logger.info("-" * 40)
         logger.info("CONFIGURATION SUMMARY")
         logger.info("-" * 40)
+        logger.info("Profit Targets Mode: %s", config.profit_targets_mode)
         logger.info("Target Profit (Position): %s", config.target_profit_position)
         logger.info("Target Profit (Pair): %s", config.target_profit_pair)
         logger.info("Target Profit (Total): %s", config.total_target_profit)
+        for category in CATEGORY_NAMES:
+            targets = config.category_targets.get(category, {})
+            logger.info(
+                "%s Targets - Position: %s, Pair: %s, Total: %s",
+                category.title(),
+                targets.get('target_profit_position'),
+                targets.get('target_profit_pair'),
+                targets.get('total_target_profit')
+            )
         logger.info("Check Interval: %s seconds", config.check_interval)
         logger.info("Order Deviation: %s", config.order_deviation)
         logger.info("Magic Number: %s", config.magic_number)

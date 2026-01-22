@@ -411,7 +411,27 @@
 
                             <div class="setting-group">
                                 <div class="setting-group-title">
-                                    <i class="fas fa-coins"></i> Profit Targets
+                                    <i class="fas fa-sliders-h"></i> Target Mode
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Apply Targets
+                                            <i class="fas fa-info-circle tooltip-icon"
+                                               data-bs-toggle="tooltip"
+                                               title="Choose to apply one target set for all symbols, or set separate targets by category."></i>
+                                        </label>
+                                        <select class="form-select" name="profit_targets_mode" id="profitTargetsMode">
+                                            <option value="all" {% if profit_scouting_config.get('profit_targets_mode', 'all') == 'all' %}selected{% endif %}>All Pairs</option>
+                                            <option value="by_category" {% if profit_scouting_config.get('profit_targets_mode', 'all') == 'by_category' %}selected{% endif %}>By Category</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="setting-group">
+                                <div class="setting-group-title">
+                                    <i class="fas fa-coins"></i> Profit Targets (All Pairs)
                                 </div>
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
@@ -457,6 +477,113 @@
                                                    value="{{ profit_scouting_config.get('total_target_profit', 20.0) }}"
                                                    required>
                                             <span class="input-group-text">$</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="profitScoutingCategoryFields">
+                                <div class="setting-group">
+                                    <div class="setting-group-title">
+                                        <i class="fas fa-coins"></i> Currency Targets
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Target Profit (Position)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="target_profit_position_currency"
+                                                       step="0.1" min="0.1" max="10000"
+                                                       value="{{ profit_scouting_config.get('target_profit_position_currency', 5.0) }}" required>
+                                                <span class="input-group-text">$</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Target Profit (Pair)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="target_profit_pair_currency"
+                                                       step="0.1" min="0.1" max="10000"
+                                                       value="{{ profit_scouting_config.get('target_profit_pair_currency', 10.0) }}" required>
+                                                <span class="input-group-text">$</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Target Profit (Total)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="total_target_profit_currency"
+                                                       step="0.1" min="0.1" max="100000"
+                                                       value="{{ profit_scouting_config.get('total_target_profit_currency', 20.0) }}" required>
+                                                <span class="input-group-text">$</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="setting-group">
+                                    <div class="setting-group-title">
+                                        <i class="fas fa-coins"></i> Commodity Targets
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Target Profit (Position)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="target_profit_position_commodity"
+                                                       step="0.1" min="0.1" max="10000"
+                                                       value="{{ profit_scouting_config.get('target_profit_position_commodity', 7.5) }}" required>
+                                                <span class="input-group-text">$</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Target Profit (Pair)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="target_profit_pair_commodity"
+                                                       step="0.1" min="0.1" max="10000"
+                                                       value="{{ profit_scouting_config.get('target_profit_pair_commodity', 15.0) }}" required>
+                                                <span class="input-group-text">$</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Target Profit (Total)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="total_target_profit_commodity"
+                                                       step="0.1" min="0.1" max="100000"
+                                                       value="{{ profit_scouting_config.get('total_target_profit_commodity', 30.0) }}" required>
+                                                <span class="input-group-text">$</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="setting-group">
+                                    <div class="setting-group-title">
+                                        <i class="fas fa-coins"></i> Crypto Targets
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Target Profit (Position)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="target_profit_position_crypto"
+                                                       step="0.1" min="0.1" max="10000"
+                                                       value="{{ profit_scouting_config.get('target_profit_position_crypto', 10.0) }}" required>
+                                                <span class="input-group-text">$</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Target Profit (Pair)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="target_profit_pair_crypto"
+                                                       step="0.1" min="0.1" max="10000"
+                                                       value="{{ profit_scouting_config.get('target_profit_pair_crypto', 20.0) }}" required>
+                                                <span class="input-group-text">$</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Target Profit (Total)</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="total_target_profit_crypto"
+                                                       step="0.1" min="0.1" max="100000"
+                                                       value="{{ profit_scouting_config.get('total_target_profit_crypto', 40.0) }}" required>
+                                                <span class="input-group-text">$</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -811,19 +938,46 @@
         // Profit scouting defaults reset
         const profitScoutingDefaults = {{ profit_scouting_defaults | tojson }};
         const profitScoutingForm = document.getElementById('profitScoutingForm');
+        const profitTargetsMode = document.getElementById('profitTargetsMode');
+        const profitScoutingCategoryFields = document.getElementById('profitScoutingCategoryFields');
+
+        function toggleProfitScoutingMode() {
+            if (!profitTargetsMode || !profitScoutingCategoryFields) return;
+            const isByCategory = profitTargetsMode.value === 'by_category';
+            profitScoutingCategoryFields.style.display = isByCategory ? 'block' : 'none';
+            profitScoutingCategoryFields.querySelectorAll('input').forEach((input) => {
+                input.disabled = !isByCategory;
+            });
+        }
 
         function resetProfitScoutingDefaults() {
             if (!profitScoutingDefaults || !profitScoutingForm) return;
             if (confirm('Reset profit scouting parameters to defaults?')) {
+                profitScoutingForm.querySelector('[name="profit_targets_mode"]').value = profitScoutingDefaults.profit_targets_mode ?? 'all';
                 profitScoutingForm.querySelector('[name="target_profit_position"]').value = profitScoutingDefaults.target_profit_position ?? 5.0;
                 profitScoutingForm.querySelector('[name="target_profit_pair"]').value = profitScoutingDefaults.target_profit_pair ?? 10.0;
                 profitScoutingForm.querySelector('[name="total_target_profit"]').value = profitScoutingDefaults.total_target_profit ?? 20.0;
+                profitScoutingForm.querySelector('[name="target_profit_position_currency"]').value = profitScoutingDefaults.target_profit_position_currency ?? 5.0;
+                profitScoutingForm.querySelector('[name="target_profit_pair_currency"]').value = profitScoutingDefaults.target_profit_pair_currency ?? 10.0;
+                profitScoutingForm.querySelector('[name="total_target_profit_currency"]').value = profitScoutingDefaults.total_target_profit_currency ?? 20.0;
+                profitScoutingForm.querySelector('[name="target_profit_position_commodity"]').value = profitScoutingDefaults.target_profit_position_commodity ?? 7.5;
+                profitScoutingForm.querySelector('[name="target_profit_pair_commodity"]').value = profitScoutingDefaults.target_profit_pair_commodity ?? 15.0;
+                profitScoutingForm.querySelector('[name="total_target_profit_commodity"]').value = profitScoutingDefaults.total_target_profit_commodity ?? 30.0;
+                profitScoutingForm.querySelector('[name="target_profit_position_crypto"]').value = profitScoutingDefaults.target_profit_position_crypto ?? 10.0;
+                profitScoutingForm.querySelector('[name="target_profit_pair_crypto"]').value = profitScoutingDefaults.target_profit_pair_crypto ?? 20.0;
+                profitScoutingForm.querySelector('[name="total_target_profit_crypto"]').value = profitScoutingDefaults.total_target_profit_crypto ?? 40.0;
                 profitScoutingForm.querySelector('[name="order_deviation"]').value = profitScoutingDefaults.order_deviation ?? 20;
                 profitScoutingForm.querySelector('[name="magic_number"]').value = profitScoutingDefaults.magic_number ?? 10001;
                 profitScoutingForm.querySelector('[name="check_interval"]').value = profitScoutingDefaults.check_interval ?? 5;
                 profitScoutingForm.querySelector('[name="max_retries"]').value = profitScoutingDefaults.max_retries ?? 3;
                 profitScoutingForm.querySelector('[name="retry_delay"]').value = profitScoutingDefaults.retry_delay ?? 1;
+                toggleProfitScoutingMode();
             }
+        }
+
+        if (profitTargetsMode) {
+            profitTargetsMode.addEventListener('change', toggleProfitScoutingMode);
+            toggleProfitScoutingMode();
         }
     </script>
 </body>
