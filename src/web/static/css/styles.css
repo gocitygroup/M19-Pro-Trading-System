@@ -747,11 +747,29 @@ body {
     border: 1px solid var(--card-border);
     background: var(--input-bg);
     color: var(--text);
+    transition: all 0.3s ease;
 }
 
 .trading-board-modal .search-input:focus {
     border-color: var(--accent-strong);
     box-shadow: 0 0 0 0.2rem rgba(106, 140, 245, 0.35);
+    outline: none;
+}
+
+.trading-board-modal #tradingBoardSearchClear {
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    padding: 6px 12px;
+    transition: all 0.2s ease;
+}
+
+.trading-board-modal #tradingBoardSearchClear:hover {
+    background-color: var(--accent-strong);
+    color: white;
+}
+
+.trading-board-modal .input-group-sm .input-group-text {
+    border-radius: 10px 0 0 10px;
 }
 
 /* ========================================

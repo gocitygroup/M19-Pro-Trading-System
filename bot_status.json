@@ -1,7 +1,7 @@
 {
-  "is_connected": false,
+  "is_connected": true,
   "is_paused": false,
-  "last_updated": "2026-01-22T15:15:09.100624+00:00",
+  "last_updated": "2026-01-23T14:17:37.840544+00:00",
   "bot_type": "MarketSessionTradingBot",
-  "message": "MT5 connection closed"
+  "message": "Connected to MT5 - Account: 51498514, Server: ICMarketsSC-Demo"
 }

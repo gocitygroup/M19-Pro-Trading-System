@@ -3,8 +3,17 @@
   "source": "api",
   "poll_seconds": 10,
   "active_ttl_seconds": 30,
-  "cycle": 69,
-  "last_fetch_time": "2026-01-21T18:23:26.814907+00:00",
-  "last_successful_cycle": "2026-01-21T18:23:16.802518+00:00",
-  "last_error": "Failed to fetch signals after retries: HTTPConnectionPool(host='100.75.171.110', port=5647): Max retries exceeded with url: /api/third-party/signals?per_page=100&page=33 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001FC88EA7230>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))"
+  "cycle": 9,
+  "last_fetch_time": "2026-01-23T14:29:25.384701+00:00",
+  "last_successful_cycle": "2026-01-23T14:30:28.300792+00:00",
+  "last_error": null,
+  "rules_loaded": 4,
+  "signals_loaded": 7750,
+  "matches_count": 0,
+  "active_pairs_count": 0,
+  "fetch_meta": {
+    "pages_fetched": 50,
+    "signals_count": 7750,
+    "elapsed_seconds": 62.618
+  }
 }

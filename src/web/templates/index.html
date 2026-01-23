@@ -37,35 +37,17 @@
                         <div class="text-white small">Manage per-session pair directions in real time</div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <!-- Search functionality removed as per instructions -->
-                        <!-- <div class="input-group input-group-sm">
+                        <!-- Search functionality for pairs and sessions -->
+                        <div class="input-group input-group-sm" style="min-width: 250px;">
                             <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
-                            <input type="text" id="tradingBoardSearch" class="form-control search-input" placeholder="Filter pairs or sessions">
-                        </div> -->
-                        <script>
-                            // Remove JS references to the search input to prevent null errors
-                            // (For "Cannot read properties of null (reading 'value')")
-                            // If code reads: document.getElementById('tradingBoardSearch').value, replace with blank string or "".
-
-                            // global patch (can't refactor all usages immediately):
-                            // (adds a mock element if needed - safe for in-template JS quick fix)
-                            document.addEventListener('DOMContentLoaded', function () {
-                                if (!document.getElementById('tradingBoardSearch')) {
-                                    window.tradingBoardSearchPatch = true;
-                                    Object.defineProperty(document, 'getElementById', {
-                                        value: (function(orig){
-                                            return function(id) {
-                                                if (id === 'tradingBoardSearch') {
-                                                    return { value: "" };
-                                                }
-                                                return orig.call(document, id);
-                                            }
-                                        })(document.getElementById.bind(document)),
-                                        configurable: true
-                                    });
-                                }
-                            });
-                        </script>
+                            <input type="text" id="tradingBoardSearch" class="form-control search-input" 
+                                   placeholder="Search pairs (e.g., EURUSD, BTCUSD)..." 
+                                   autocomplete="off">
+                            <button type="button" class="btn btn-outline-secondary" id="tradingBoardSearchClear" 
+                                    style="display: none;" title="Clear search">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                         <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
                             <i class="fas fa-times"></i>
                         </button>
@@ -1225,6 +1207,7 @@
             const modal = new bootstrap.Modal(modalElement);
             const refreshBtn = document.getElementById('refreshTradingBoard');
             const searchInput = document.getElementById('tradingBoardSearch');
+            const searchClearBtn = document.getElementById('tradingBoardSearchClear');
 
             makeDraggable(handle);
 
@@ -1237,9 +1220,52 @@
                 loadTradingBoard(true);
             });
 
-            modalElement.addEventListener('shown.bs.modal', () => loadTradingBoard());
+            // Show/hide clear button based on input
+            function toggleSearchClearButton() {
+                if (searchInput && searchClearBtn) {
+                    searchClearBtn.style.display = searchInput.value.trim() ? 'block' : 'none';
+                }
+            }
+            
+            modalElement.addEventListener('shown.bs.modal', () => {
+                // Clear search when modal opens for fresh start
+                if (searchInput) {
+                    searchInput.value = '';
+                    toggleSearchClearButton();
+                }
+                loadTradingBoard();
+            });
+            
+            modalElement.addEventListener('hidden.bs.modal', () => {
+                // Clear search when modal closes
+                if (searchInput) {
+                    searchInput.value = '';
+                    toggleSearchClearButton();
+                }
+            });
+            
             refreshBtn.addEventListener('click', () => loadTradingBoard(true));
-            searchInput.addEventListener('input', applyTradingBoardFilter);
+            
+            // Search input functionality
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    toggleSearchClearButton();
+                    applyTradingBoardFilter();
+                });
+                
+                // Clear search button
+                if (searchClearBtn) {
+                    searchClearBtn.addEventListener('click', function() {
+                        searchInput.value = '';
+                        searchInput.focus();
+                        toggleSearchClearButton();
+                        applyTradingBoardFilter();
+                    });
+                }
+                
+                // Initialize clear button visibility
+                toggleSearchClearButton();
+            }
         }
 
         function makeDraggable(element) {
@@ -1352,11 +1378,12 @@
             const searchTerm = (document.getElementById('tradingBoardSearch').value || '').toLowerCase();
 
             // Filter and sort sessions: active first
+            // If search term exists, show sessions that have matching pairs or matching session name
             let sessions = tradingBoardState.sessions.filter(session => {
                 if (!searchTerm) return true;
                 const inName = session.name.toLowerCase().includes(searchTerm);
-                const inPair = session.pairs.some(p => p.symbol.toLowerCase().includes(searchTerm));
-                return inName || inPair;
+                const hasMatchingPair = session.pairs.some(p => p.symbol.toLowerCase().includes(searchTerm));
+                return inName || hasMatchingPair;
             });
 
             // Sort: active sessions first
@@ -1367,7 +1394,10 @@
             });
 
             if (!sessions.length) {
-                container.innerHTML = '<div class="alert alert-light border">No sessions match your filter.</div>';
+                const searchMessage = searchTerm 
+                    ? `No sessions or pairs found matching "${searchTerm}". Try a different search term.`
+                    : 'No sessions available.';
+                container.innerHTML = `<div class="alert alert-light border"><i class="fas fa-info-circle"></i> ${searchMessage}</div>`;
                 return;
             }
 
@@ -1382,6 +1412,14 @@
                 const prettyStart = session.start_time?.slice(0, 5) || session.start_time;
                 const prettyEnd = session.end_time?.slice(0, 5) || session.end_time;
 
+                // Filter pairs if search term exists
+                let filteredPairs = session.pairs;
+                if (searchTerm) {
+                    filteredPairs = session.pairs.filter(pair => 
+                        pair.symbol.toLowerCase().includes(searchTerm)
+                    );
+                }
+
                 // Categorize pairs using category from database
                 const categorizedPairs = {
                     mostTraded: [],
@@ -1390,7 +1428,7 @@
                     other: []
                 };
 
-                session.pairs.forEach(pair => {
+                filteredPairs.forEach(pair => {
                     // Category comes from database, not hardcoded
                     const category = getPairCategory(pair);
                     categorizedPairs[category].push(pair);
@@ -1427,6 +1465,11 @@
                         `;
                     }
                 });
+                
+                // Show message if search is active but no pairs match in this session
+                if (searchTerm && filteredPairs.length === 0) {
+                    pairsHTML = `<div class="text-muted text-center py-3"><i class="fas fa-search"></i> No pairs match "${searchTerm}" in this session.</div>`;
+                }
 
                 card.innerHTML = `
                     <div class="session-header">

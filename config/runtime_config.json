@@ -3,61 +3,61 @@
         "min_profit_percent": 0.5,
         "_metadata": {
             "min_profit_percent": {
-                "updated_at": "2026-01-21T16:59:22.504273",
+                "updated_at": "2026-01-23T14:03:56.545817",
                 "old_value": 0.5,
                 "new_value": 0.5
             },
             "trailing_stop_percent": {
-                "updated_at": "2026-01-21T16:59:22.536181",
+                "updated_at": "2026-01-23T14:03:56.550378",
                 "old_value": 0.7,
-                "new_value": 0.7
+                "new_value": 0.2
             },
             "check_interval": {
-                "updated_at": "2026-01-21T16:59:22.538210",
-                "old_value": 1800,
+                "updated_at": "2026-01-23T14:03:56.552859",
+                "old_value": 60,
                 "new_value": 60
             },
             "partial_close_enabled": {
-                "updated_at": "2026-01-21T16:59:22.550918",
+                "updated_at": "2026-01-23T14:03:56.563183",
                 "old_value": true,
                 "new_value": true
             },
             "partial_close_threshold": {
-                "updated_at": "2026-01-21T16:59:22.540805",
+                "updated_at": "2026-01-23T14:03:56.554970",
                 "old_value": 1.0,
                 "new_value": 1.0
             },
             "partial_close_percent": {
-                "updated_at": "2026-01-21T16:59:22.544738",
+                "updated_at": "2026-01-23T14:03:56.557232",
                 "old_value": 50,
-                "new_value": 50
+                "new_value": 40
             },
             "max_retries": {
-                "updated_at": "2026-01-21T16:59:22.546807",
+                "updated_at": "2026-01-23T14:03:56.559110",
                 "old_value": 3,
                 "new_value": 3
             },
             "retry_delay": {
-                "updated_at": "2026-01-21T16:59:22.548892",
+                "updated_at": "2026-01-23T14:03:56.561236",
                 "old_value": 1.0,
                 "new_value": 1.0
             },
             "enable_market_check": {
-                "updated_at": "2026-01-21T16:59:22.552526",
+                "updated_at": "2026-01-23T14:03:56.567040",
                 "old_value": true,
                 "new_value": true
             },
             "log_level": {
-                "updated_at": "2026-01-21T16:59:22.553992",
+                "updated_at": "2026-01-23T14:03:56.568768",
                 "old_value": "INFO",
                 "new_value": "INFO"
             }
         },
-        "trailing_stop_percent": 0.7,
+        "trailing_stop_percent": 0.2,
         "check_interval": 60,
         "partial_close_enabled": true,
         "partial_close_threshold": 1.0,
-        "partial_close_percent": 50,
+        "partial_close_percent": 40,
         "max_retries": 3,
         "retry_delay": 1.0,
         "enable_market_check": true,
@@ -110,55 +110,115 @@
         "session_check_interval": 60
     },
     "profit_scouting": {
-        "target_profit_pair": 10.0,
+        "target_profit_pair": 8.0,
         "_metadata": {
             "target_profit_pair": {
-                "updated_at": "2026-01-21T18:01:07.440567",
-                "old_value": null,
-                "new_value": 10.0
+                "updated_at": "2026-01-23T14:21:00.520028",
+                "old_value": 8.0,
+                "new_value": 8.0
             },
             "target_profit_position": {
-                "updated_at": "2026-01-21T18:01:07.441946",
-                "old_value": null,
-                "new_value": 5.0
+                "updated_at": "2026-01-23T14:21:00.523522",
+                "old_value": 15.0,
+                "new_value": 15.0
             },
             "total_target_profit": {
-                "updated_at": "2026-01-21T18:01:07.443831",
-                "old_value": null,
-                "new_value": 20.0
+                "updated_at": "2026-01-23T14:21:00.526806",
+                "old_value": 30.0,
+                "new_value": 30.0
             },
             "order_deviation": {
-                "updated_at": "2026-01-21T18:01:07.445132",
-                "old_value": null,
+                "updated_at": "2026-01-23T14:21:00.528591",
+                "old_value": 20,
                 "new_value": 20
             },
             "magic_number": {
-                "updated_at": "2026-01-21T18:01:07.446293",
-                "old_value": null,
+                "updated_at": "2026-01-23T14:21:00.530936",
+                "old_value": 10001,
                 "new_value": 10001
             },
             "check_interval": {
-                "updated_at": "2026-01-21T18:01:07.447675",
-                "old_value": null,
+                "updated_at": "2026-01-23T14:21:00.533953",
+                "old_value": 5,
                 "new_value": 5
             },
             "max_retries": {
-                "updated_at": "2026-01-21T18:01:07.448804",
-                "old_value": null,
+                "updated_at": "2026-01-23T14:21:00.535658",
+                "old_value": 3,
                 "new_value": 3
             },
             "retry_delay": {
-                "updated_at": "2026-01-21T18:01:07.450026",
+                "updated_at": "2026-01-23T14:21:00.537319",
+                "old_value": 1.0,
+                "new_value": 1.0
+            },
+            "profit_targets_mode": {
+                "updated_at": "2026-01-23T14:21:00.516820",
+                "old_value": "all",
+                "new_value": "by_category"
+            },
+            "target_profit_pair_currency": {
+                "updated_at": "2026-01-23T14:21:00.539278",
                 "old_value": null,
-                "new_value": 1
+                "new_value": 12.0
+            },
+            "target_profit_position_currency": {
+                "updated_at": "2026-01-23T14:21:00.541551",
+                "old_value": null,
+                "new_value": 6.0
+            },
+            "total_target_profit_currency": {
+                "updated_at": "2026-01-23T14:21:00.544961",
+                "old_value": null,
+                "new_value": 25.0
+            },
+            "target_profit_pair_commodity": {
+                "updated_at": "2026-01-23T14:21:00.548366",
+                "old_value": null,
+                "new_value": 20.0
+            },
+            "target_profit_position_commodity": {
+                "updated_at": "2026-01-23T14:21:00.551623",
+                "old_value": null,
+                "new_value": 10.0
+            },
+            "total_target_profit_commodity": {
+                "updated_at": "2026-01-23T14:21:00.554794",
+                "old_value": null,
+                "new_value": 40.0
+            },
+            "target_profit_pair_crypto": {
+                "updated_at": "2026-01-23T14:21:00.556891",
+                "old_value": null,
+                "new_value": 30.0
+            },
+            "target_profit_position_crypto": {
+                "updated_at": "2026-01-23T14:21:00.558959",
+                "old_value": null,
+                "new_value": 15.0
+            },
+            "total_target_profit_crypto": {
+                "updated_at": "2026-01-23T14:21:00.570743",
+                "old_value": null,
+                "new_value": 60.0
             }
         },
-        "target_profit_position": 5.0,
-        "total_target_profit": 20.0,
+        "target_profit_position": 15.0,
+        "total_target_profit": 30.0,
         "order_deviation": 20,
         "magic_number": 10001,
         "check_interval": 5,
         "max_retries": 3,
-        "retry_delay": 1
+        "retry_delay": 1.0,
+        "profit_targets_mode": "by_category",
+        "target_profit_pair_currency": 12.0,
+        "target_profit_position_currency": 6.0,
+        "total_target_profit_currency": 25.0,
+        "target_profit_pair_commodity": 20.0,
+        "target_profit_position_commodity": 10.0,
+        "total_target_profit_commodity": 40.0,
+        "target_profit_pair_crypto": 30.0,
+        "target_profit_position_crypto": 15.0,
+        "total_target_profit_crypto": 60.0
     }
 }
