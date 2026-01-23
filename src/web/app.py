@@ -1101,6 +1101,51 @@ def get_trading_board():
             conn.close()
 
 
+@app.route('/api/trading_board/refresh_symbols', methods=['POST'])
+@login_required
+def refresh_symbols_from_msgpack():
+    """Refresh currency pairs in database from centralized msgpack file.
+    Uses the shared update_database_from_msgpack() function following DRY principle.
+    This allows manual refresh from UI if needed (though retrieve_symbols.bat does this automatically)."""
+    try:
+        import sys
+        database_dir = os.path.join(project_root, 'database')
+        sys.path.insert(0, database_dir)
+        
+        from setup_db import update_database_from_msgpack
+        
+        # Use the shared function (DRY principle)
+        result = update_database_from_msgpack()
+        
+        if result['status'] == 'error':
+            return jsonify({
+                'status': 'error',
+                'error': result.get('error', 'Failed to refresh symbols')
+            }), 400
+        
+        # Invalidate cache to ensure fresh data on next request
+        _session_pair_cache['last_check'] = None
+        
+        return jsonify({
+            'status': 'success',
+            'message': result['message'],
+            'symbols_count': result['symbols_count'],
+            'new_symbols': result.get('new_symbols', 0),
+            'updated_symbols': result.get('updated_symbols', 0),
+            'deactivated_symbols': result.get('deactivated_symbols', 0),
+            'updated_at': datetime.utcnow().isoformat()
+        })
+            
+    except Exception as e:
+        logger.error(f"Error refreshing symbols from msgpack: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'status': 'error',
+            'error': f'Failed to refresh symbols: {str(e)}'
+        }), 500
+
+
 @app.route('/api/trading_board/direction', methods=['POST'])
 @login_required
 def update_trading_direction():

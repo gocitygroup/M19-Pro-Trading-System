@@ -79,9 +79,23 @@ if not exist "%SCRIPT_DIR%requirements.txt" (
     pause
     exit /b 1
 )
+REM Try to install msgpack separately first with pre-built wheel preference
+echo [INFO] Installing msgpack (preferring pre-built wheels)...
+pip install --prefer-binary msgpack>=1.1.0
+if errorlevel 1 (
+    echo [WARNING] Failed to install msgpack with pre-built wheel
+    echo           Will try during full requirements installation...
+)
+REM Install all requirements
 pip install -r "%SCRIPT_DIR%requirements.txt"
 if errorlevel 1 (
     echo [ERROR] Failed to install dependencies
+    echo.
+    echo         If msgpack installation failed, you may need:
+    echo         1. Microsoft Visual C++ Build Tools (for building from source)
+    echo            Download: https://visualstudio.microsoft.com/visual-cpp-build-tools/
+    echo         2. Or try: pip install --upgrade pip setuptools wheel
+    echo            Then: pip install msgpack
     pause
     exit /b 1
 )

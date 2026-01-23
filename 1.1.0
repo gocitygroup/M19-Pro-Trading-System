@@ -1,0 +1,5 @@
+Collecting msgpack
+  Using cached msgpack-1.1.2-cp313-cp313-win_amd64.whl.metadata (8.4 kB)
+Using cached msgpack-1.1.2-cp313-cp313-win_amd64.whl (72 kB)
+Installing collected packages: msgpack
+Successfully installed msgpack-1.1.2
