@@ -72,37 +72,123 @@ TRADING_BOT_CONFIG = {
 }
 
 # Profit Monitor Parameters
+# PROFIT_MONITOR_CONFIG documents the parameters for the profit monitoring logic.
+# 
+# STRATEGY WHEN RUNNING WITH PROFIT SCOUTING BOT:
+# - Enhanced Profit Monitor: Focus on LOSS PREVENTION, profit locking, and DCA management
+# - Uses percentage-based thresholds for early intervention
+# - Enables partial closing for dollar cost averaging
+# - Lower thresholds to catch losses early and lock small profits
+# - Works in harmony with Profit Scouting Bot which takes larger dollar targets
+#
+# Each parameter is explained with an example of its usage.
 PROFIT_MONITOR_CONFIG = {
+    # The minimum percent profit to consider a position for closing.
+    # RECOMMENDED: 0.3-0.5% for loss prevention and early profit locking
+    # Lower than Profit Scouting targets to catch issues early
+    # e.g., min_profit_percent = 0.5 means only close if profit >= 0.5% of position value.
     'min_profit_percent': 0.5,
+
+    # The trailing stop percent, used to set a dynamic stop-loss as profit increases.
+    # RECOMMENDED: 0.2-0.3% for stable DCA management
+    # Protects profits while allowing positions to grow toward Profit Scouting targets
+    # e.g., trailing_stop_percent = 0.2 means if a position gains 1.0%, the stop-loss is set at 0.8%.
     'trailing_stop_percent': 0.2,
-    'check_interval': 1800,
+
+    # Time in seconds between profit checks.
+    # RECOMMENDED: 60-120 seconds for enhanced monitor (faster than Profit Scouting)
+    # Enhanced monitor updates cache every 1 second, but full checks can be less frequent
+    # e.g., check_interval = 60 means check every 60 seconds (1 minute).
+    'check_interval': 60,
+
+    # Whether partial closing of positions is enabled.
+    # RECOMMENDED: True for dollar cost averaging strategy
+    # Allows locking profits while keeping position open for further gains
+    # e.g., True allows splitting and partially closing profitable positions.
     'partial_close_enabled': True,
+
+    # The profit percent threshold at which to trigger a partial close.
+    # RECOMMENDED: 0.8-1.2% to lock profits early while allowing growth
+    # Lower than Profit Scouting targets to enable DCA before scouting bot takes full profit
+    # e.g., partial_close_threshold = 1.0 means if profit > 1.0%, partial close may happen.
     'partial_close_threshold': 1.0,
-    'partial_close_percent': 50,
+
+    # The percentage of the position volume to close on a partial close.
+    # RECOMMENDED: 30-50% for stable DCA (don't close too much, leave room for growth)
+    # Balances profit locking with allowing positions to reach Profit Scouting targets
+    # e.g., partial_close_percent = 50 means close 50% of the position volume when partial close is triggered.
+    'partial_close_percent': 40,
+
+    # Max number of retries for actions like closing positions if an error occurs.
+    # e.g., Try closing the position up to 3 times before giving up.
     'max_retries': 3,
+
+    # Delay in seconds between retries.
+    # e.g., Wait 1 second before attempting a retry after error.
     'retry_delay': 1,
+
+    # Whether to check if the market is open before attempting trades.
+    # RECOMMENDED: True to prevent actions during market closure
+    # e.g., If enable_market_check is True and market is closed, actions are skipped.
     'enable_market_check': True,
+
+    # The log level used for profit monitor logs.
+    # e.g., 'INFO' logs informational messages, 'DEBUG' would log more detail.
     'log_level': 'INFO'
 }
 
 # Profit Scouting Bot Parameters
+# 
+# STRATEGY WHEN RUNNING WITH ENHANCED PROFIT MONITOR:
+# - Profit Scouting Bot: Focus on TAKING DOLLAR PROFIT TARGETS
+# - Uses dollar amounts (not percentages) for precise profit taking
+# - Higher thresholds than Enhanced Monitor to take profits after DCA has locked some
+# - Automatically closes positions when dollar targets are met
+# - Works in harmony with Enhanced Monitor which handles loss prevention and DCA
+#
+# RECOMMENDED SETTINGS FOR DUAL OPERATION:
+# - Set dollar targets HIGHER than what Enhanced Monitor would trigger
+# - This ensures Enhanced Monitor handles early profit locking (DCA)
+# - Profit Scouting takes full profit when larger dollar targets are reached
 PROFIT_SCOUTING_CONFIG = {
-    'profit_targets_mode': 'all',
-    'target_profit_pair': 10.0,
-    'target_profit_position': 5.0,
-    'total_target_profit': 20.0,
-    'target_profit_pair_currency': 10.0,
-    'target_profit_position_currency': 5.0,
-    'total_target_profit_currency': 20.0,
-    'target_profit_pair_commodity': 15.0,
-    'target_profit_position_commodity': 7.5,
-    'total_target_profit_commodity': 30.0,
-    'target_profit_pair_crypto': 20.0,
-    'target_profit_position_crypto': 10.0,
-    'total_target_profit_crypto': 40.0,
-    'order_deviation': 20,
-    'magic_number': 10001,
+    # Profit targets mode: 'all' uses same targets for all, 'by_category' uses category-specific
+    # RECOMMENDED: 'by_category' for better control across different asset types
+    'profit_targets_mode': 'by_category',
+    
+    # Default targets (used when mode is 'all' or as fallback)
+    # RECOMMENDED: Set these higher than Enhanced Monitor's percentage-based triggers
+    'target_profit_pair': 15.0,      # Dollar profit for all positions of a symbol
+    'target_profit_position': 8.0,  # Dollar profit for individual position
+    'total_target_profit': 30.0,    # Total dollar profit across all positions
+    
+    # Currency pair targets (Forex)
+    # RECOMMENDED: Moderate targets for stable currency pairs
+    'target_profit_pair_currency': 12.0,
+    'target_profit_position_currency': 6.0,
+    'total_target_profit_currency': 25.0,
+    
+    # Commodity targets (Gold, Oil, etc.)
+    # RECOMMENDED: Higher targets due to higher volatility
+    'target_profit_pair_commodity': 20.0,
+    'target_profit_position_commodity': 10.0,
+    'total_target_profit_commodity': 40.0,
+    
+    # Crypto targets
+    # RECOMMENDED: Highest targets due to highest volatility
+    'target_profit_pair_crypto': 30.0,
+    'target_profit_position_crypto': 15.0,
+    'total_target_profit_crypto': 60.0,
+    
+    # Order execution parameters
+    'order_deviation': 20,      # Slippage tolerance in points
+    'magic_number': 10001,     # Identifier for bot-managed positions
+    
+    # Check interval in seconds
+    # RECOMMENDED: 5-10 seconds for responsive profit taking
+    # Can be slightly slower than Enhanced Monitor since it targets larger moves
     'check_interval': 5,
+    
+    # Retry configuration
     'max_retries': 3,
     'retry_delay': 1
 }
